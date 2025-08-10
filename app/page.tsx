@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense } from 'react'
 import { database } from '@/lib/firebase'
 import { ref, onValue } from 'firebase/database'
 import type { Product, Category } from '@/types'
-import dynamic from 'next/dynamic'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -16,13 +15,18 @@ import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext
 
 // Using shared types from @/types
 
-// Client-side only component to prevent hydration issues
-const HomePageContent = () => {
+// Internal helper to read query params inside Suspense
+const CategoryQueryReader = ({ onCategory }: { onCategory: (c: string) => void }) => {
+  const sp = useSearchParams()
   useEffect(() => {
-    console.log('HomePage mounted on client side')
-  }, [])
-  
-  return <HomePage />
+    try {
+      const cat = (sp.get('category') || '').trim()
+      if (cat) onCategory(cat)
+    } catch (e) {
+      console.error('Error reading category query:', e)
+    }
+  }, [sp, onCategory])
+  return null
 }
 
 // Main page component wrapped with dynamic import and no SSR
@@ -34,7 +38,7 @@ const HomePage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const searchParams = useSearchParams()
+  
 
   useEffect(() => {
     console.log('Setting up Firebase listeners...')
@@ -121,18 +125,7 @@ const HomePage = () => {
       setLoading(false)
     }
   }, [])
-
-  // Respect category query param from URL (e.g., /?category=Cement)
-  useEffect(() => {
-    try {
-      const cat = (searchParams.get('category') || '').trim()
-      if (cat) {
-        setSelectedCategory(cat)
-      }
-    } catch (e) {
-      console.error('Error reading category query:', e)
-    }
-  }, [searchParams])
+ 
 
   useEffect(() => {
     try {
@@ -204,6 +197,9 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Suspense fallback={null}>
+        <CategoryQueryReader onCategory={(c) => setSelectedCategory(c)} />
+      </Suspense>
       {/* Hero Section */}
       <div className="relative overflow-hidden text-white">
         {/* Gradient background + soft shapes */}
