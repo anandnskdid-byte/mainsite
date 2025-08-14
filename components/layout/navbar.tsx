@@ -108,127 +108,177 @@ export function Navbar() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const q = searchQuery.trim()
-    router.push(q ? `/?search=${encodeURIComponent(q)}` : '/')
+    if (q) {
+      router.push(`/search?q=${encodeURIComponent(q)}`)
+    }
   }
 
   return (
-    <nav className="bg-white shadow-sm border-b sticky top-0 z-50 rounded-b-2xl">
+    <nav className="bg-white/95 backdrop-blur-md shadow-lg border-b border-orange-100 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-4 h-16 rounded-r-2xl ring-1 ring-gray-200 px-3">
-          {/* Logo */}
+        <div className="flex items-center justify-between h-20">
+          {/* Enhanced Logo */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
-              <Home className="h-8 w-8 text-orange-600" />
-              <span className="text-xl font-bold text-gray-900 hidden sm:block">
-                Shri Karni Home Solutions
-              </span>
-              <span className="text-lg font-bold text-gray-900 sm:hidden">
+            <Link href="/" className="flex items-center space-x-3 group">
+              <div className="p-2 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                <Home className="h-6 w-6 text-white" />
+              </div>
+              <div className="hidden sm:block">
+                <span className="text-xl font-bold bg-gradient-to-r from-orange-600 to-orange-700 bg-clip-text text-transparent">
+                  Shri Karni
+                </span>
+                <div className="text-xs text-gray-500 -mt-1">Home Solutions</div>
+              </div>
+              <span className="text-lg font-bold bg-gradient-to-r from-orange-600 to-orange-700 bg-clip-text text-transparent sm:hidden">
                 Shri Karni
               </span>
             </Link>
           </div>
 
-          {/* Search (desktop) */}
-          <div className="hidden md:flex flex-1">
+          {/* Enhanced Search (desktop) */}
+          <div className="hidden md:flex flex-1 max-w-2xl mx-8">
             <form onSubmit={handleSearchSubmit} className="w-full">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+              <div className="relative group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-orange-500 transition-colors duration-200" />
                 <Input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search for Products, Brands and More"
-                  className="h-11 pl-9 bg-gray-50 rounded-full"
+                  placeholder="Search for Products, Brands and More..."
+                  className="h-12 pl-12 pr-4 bg-gray-50/80 backdrop-blur-sm border-2 border-transparent rounded-2xl text-base placeholder:text-gray-400 focus:border-orange-300 focus:bg-white focus:shadow-lg transition-all duration-300 hover:bg-white/90"
                 />
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-4 py-2 transition-all duration-200 hover:scale-105"
+                >
+                  Search
+                </Button>
               </div>
             </form>
           </div>
 
-          {/* Right actions (desktop) */}
-          <div className="hidden md:flex items-center gap-6">
+          {/* Enhanced Right actions (desktop) */}
+          <div className="hidden md:flex items-center gap-4">
             {loading ? (
-              <div className="animate-pulse flex space-x-2">
-                <div className="h-8 w-20 bg-gray-200 rounded"></div>
-                <div className="h-8 w-16 bg-gray-200 rounded"></div>
+              <div className="animate-pulse flex space-x-3">
+                <div className="h-10 w-24 bg-gray-200 rounded-xl"></div>
+                <div className="h-10 w-20 bg-gray-200 rounded-xl"></div>
               </div>
             ) : user && userData ? (
               <>
-                <Link href={userData.role === 'customer' ? '/customer/profile' : userData.role === 'seller' ? '/seller/dashboard' : '/admin/dashboard'}>
-                  <Button variant="ghost" size="sm">
-                    <User className="h-4 w-4 mr-2" />
-                    {userData.name}
+                {/* Quick Links */}
+                <Link href="/categories">
+                  <Button variant="ghost" className="text-gray-600 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200">
+                    <Package className="h-4 w-4 mr-2" />
+                    Categories
                   </Button>
                 </Link>
+
+                {/* Enhanced Cart */}
                 <Link href="/cart">
-                  <Button variant="ghost" size="sm" className="relative">
-                    <ShoppingCart className="h-4 w-4 mr-2" />
+                  <Button variant="ghost" className="relative text-gray-600 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 group">
+                    <ShoppingCart className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform duration-200" />
                     Cart
                     {state.itemCount > 0 && (
-                      <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-orange-500 hover:bg-orange-500">
+                      <Badge className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg animate-pulse">
                         {state.itemCount > 99 ? '99+' : state.itemCount}
                       </Badge>
                     )}
                   </Button>
                 </Link>
-                <Link href={userData.role === 'seller' ? '/seller/dashboard' : userData.role === 'admin' ? '/admin/dashboard' : '/auth/register'}>
-                  <Button variant="ghost" size="sm">
-                    <Package className="h-4 w-4 mr-2" />
-                    {userData.role === 'seller' || userData.role === 'admin' ? 'Dashboard' : 'Become a Seller'}
+
+                {/* Enhanced User Menu */}
+                <div className="flex items-center gap-2 pl-4 border-l border-gray-200">
+                  <Link href={userData.role === 'customer' ? '/customer/profile' : userData.role === 'seller' ? '/seller/dashboard' : '/admin/dashboard'}>
+                    <Button variant="ghost" className="text-gray-600 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200">
+                      <User className="h-4 w-4 mr-2" />
+                      {userData.name}
+                    </Button>
+                  </Link>
+                  
+                  {userData.role !== 'customer' && (
+                    <Link href={userData.role === 'seller' ? '/seller/dashboard' : '/admin/dashboard'}>
+                      <Button size="sm" className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105">
+                        Dashboard
+                      </Button>
+                    </Link>
+                  )}
+                  
+                  <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all duration-200">
+                    <LogOut className="h-4 w-4" />
                   </Button>
-                </Link>
-                <Button variant="ghost" size="sm" onClick={handleLogout}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </Button>
+                </div>
               </>
             ) : (
               <>
-                <Link href="/auth/login">
-                  <Button variant="ghost" size="sm">
-                    <User className="h-4 w-4 mr-2" />
-                    Login
+                {/* Quick Links for Guests */}
+                <Link href="/categories">
+                  <Button variant="ghost" className="text-gray-600 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200">
+                    <Package className="h-4 w-4 mr-2" />
+                    Categories
                   </Button>
                 </Link>
+
+                {/* Enhanced Cart for Guests */}
                 <Link href="/cart">
-                  <Button variant="ghost" size="sm" className="relative">
-                    <ShoppingCart className="h-4 w-4 mr-2" />
+                  <Button variant="ghost" className="relative text-gray-600 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 group">
+                    <ShoppingCart className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform duration-200" />
                     Cart
                     {state.itemCount > 0 && (
-                      <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-orange-500 hover:bg-orange-500">
+                      <Badge className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg animate-pulse">
                         {state.itemCount > 99 ? '99+' : state.itemCount}
                       </Badge>
                     )}
                   </Button>
                 </Link>
-                <Link href="/auth/register">
-                  <Button variant="ghost" size="sm">
-                    <Package className="h-4 w-4 mr-2" />
-                    Become a Seller
-                  </Button>
-                </Link>
+
+                {/* Enhanced Auth Buttons */}
+                <div className="flex items-center gap-2 pl-4 border-l border-gray-200">
+                  <Link href="/auth/login">
+                    <Button variant="ghost" className="text-gray-600 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200">
+                      <User className="h-4 w-4 mr-2" />
+                      Login
+                    </Button>
+                  </Link>
+                  <Link href="/auth/register">
+                    <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105">
+                      Register
+                    </Button>
+                  </Link>
+                </div>
               </>
             )}
           </div>
 
-          {/* Mobile actions */}
-          <div className="md:hidden ml-auto flex items-center space-x-2">
-            {user && userData?.role === 'customer' && (
-              <Link href="/cart">
-                <Button variant="ghost" size="sm" className="relative">
-                  <ShoppingCart className="h-4 w-4" />
-                  {state.itemCount > 0 && (
-                    <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 flex items-center justify-center text-xs bg-orange-500">
-                      {state.itemCount > 9 ? '9+' : state.itemCount}
-                    </Badge>
-                  )}
-                </Button>
-              </Link>
-            )}
+          {/* Enhanced Mobile actions */}
+          <div className="md:hidden ml-auto flex items-center space-x-3">
+            {/* Mobile Search */}
+            <Link href="/search">
+              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200">
+                <Search className="h-5 w-5" />
+              </Button>
+            </Link>
+
+            {/* Mobile Cart */}
+            <Link href="/cart">
+              <Button variant="ghost" size="sm" className="relative text-gray-600 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200">
+                <ShoppingCart className="h-5 w-5" />
+                {state.itemCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md">
+                    {state.itemCount > 9 ? '9+' : state.itemCount}
+                  </Badge>
+                )}
+              </Button>
+            </Link>
+
+            {/* Mobile Menu Button */}
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="text-gray-600 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200"
             >
-              <Menu className="h-4 w-4" />
+              <Menu className="h-5 w-5" />
             </Button>
           </div>
         </div>

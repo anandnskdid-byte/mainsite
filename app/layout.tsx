@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { Navbar } from '@/components/layout/navbar'
 import { CartProvider } from '@/contexts/cart-context'
+import SitePopup from '@/components/ui/site-popup'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -23,6 +24,7 @@ export default function RootLayout({
         <CartProvider>
           <Navbar />
           {children}
+          <SitePopup />
         </CartProvider>
       </body>
     </html>

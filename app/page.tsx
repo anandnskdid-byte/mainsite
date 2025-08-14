@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useMemo } from 'react'
 import { database } from '@/lib/firebase'
 import { ref, onValue } from 'firebase/database'
 import type { Product, Category } from '@/types'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -39,6 +40,28 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   
+
+  // Randomly group products: 4 cards x 4 products each (up to 16 total)
+  const randomGroups = useMemo(() => {
+    try {
+      if (!products || products.length === 0) return [] as Product[][]
+      const arr = [...products]
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[arr[i], arr[j]] = [arr[j], arr[i]]
+      }
+      const selected = arr.slice(0, Math.min(16, arr.length))
+      const groups: Product[][] = []
+      const groupCount = Math.min(4, Math.ceil(selected.length / 4))
+      for (let i = 0; i < groupCount; i++) {
+        groups.push(selected.slice(i * 4, i * 4 + 4))
+      }
+      return groups
+    } catch (e) {
+      console.error('Error creating random groups:', e)
+      return [] as Product[][]
+    }
+  }, [products])
 
   useEffect(() => {
     console.log('Setting up Firebase listeners...')
@@ -200,168 +223,297 @@ const HomePage = () => {
       <Suspense fallback={null}>
         <CategoryQueryReader onCategory={(c) => setSelectedCategory(c)} />
       </Suspense>
-      {/* Hero Section */}
-      <div className="relative overflow-hidden text-white">
-        {/* Gradient background + soft shapes */}
-        <div className="absolute inset-0 bg-gradient-to-r from-orange-500 via-orange-600 to-amber-500" />
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-24 -left-24 w-[28rem] h-[28rem] bg-white/5 rounded-full blur-3xl" />
+      <div className="space-y-8">
+        {/* Ultra Enhanced Hero Section */}
+        <div className="relative w-full overflow-hidden">
+          {/* Background with animated gradient */}
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-50 via-white to-orange-100 animate-gradient-x"></div>
+          
+          {/* Floating particles animation */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute top-20 left-10 w-4 h-4 bg-orange-300 rounded-full opacity-60 animate-float"></div>
+            <div className="absolute top-40 right-20 w-6 h-6 bg-blue-300 rounded-full opacity-40 animate-float-delayed"></div>
+            <div className="absolute bottom-32 left-20 w-3 h-3 bg-yellow-300 rounded-full opacity-50 animate-bounce"></div>
+            <div className="absolute top-1/3 right-1/4 w-5 h-5 bg-pink-300 rounded-full opacity-30 animate-pulse"></div>
+            <div className="absolute bottom-20 right-10 w-4 h-4 bg-green-300 rounded-full opacity-40 animate-float"></div>
+          </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-          <div className="grid md:grid-cols-2 items-center gap-10">
-            {/* Left: Copy + Search + CTAs */}
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 ring-1 ring-white/20 text-sm mb-4">
-                <ShieldCheck className="h-4 w-4" />
-                100% Genuine Materials
-              </div>
+          <div className="relative min-h-[600px] md:min-h-[700px] flex items-center">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+                {/* Left Content */}
+                <div className="text-center lg:text-left space-y-8 animate-fade-in-up">
+                  {/* Badge */}
+                  <div className="inline-flex items-center px-4 py-2 bg-orange-100 text-orange-800 rounded-full text-sm font-medium animate-bounce-subtle">
+                    🏆 #1 Home Solutions Provider
+                  </div>
 
-              <h1 className="text-4xl md:text-6xl font-extrabold leading-tight">
-                Shri Karni <span className="bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-white">Home Solutions</span>
-              </h1>
-              <p className="text-lg md:text-xl mt-4 md:mt-6 opacity-90 max-w-xl">
-                Your one‑stop destination for premium home & construction materials at the best prices.
-              </p>
-
-              {/* Search */}
-              <div className="mt-6 flex flex-col sm:flex-row gap-4 max-w-xl">
-                <div className="relative flex-1 w-full">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
-                  <Input
-                    type="text"
-                    placeholder="Search products..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 bg-white text-gray-900 border-0 focus:ring-2 focus:ring-orange-300"
-                  />
-                </div>
-                <Button 
-                  onClick={clearFilters}
-                  className="bg-white text-orange-600 hover:bg-gray-100"
-                >
-                  <Filter className="h-4 w-4 mr-2" />
-                  Clear
-                </Button>
-              </div>
-
-              {/* Quick category pills */}
-              {categories.length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => handleCategorySelect('all')}
-                    className={`h-8 px-3 rounded-full bg-white/10 border-white/30 text-white hover:bg-white/20 ${selectedCategory === 'all' ? 'ring-2 ring-white/60' : ''}`}
-                  >
-                    All
-                  </Button>
-                  {categories.slice(0, 6).map((cat) => (
-                    <Button
-                      key={cat.id}
-                      variant="outline"
-                      onClick={() => handleCategorySelect(cat.name)}
-                      className={`h-8 px-3 rounded-full bg-white/10 border-white/30 text-white hover:bg-white/20 ${selectedCategory === cat.name ? 'ring-2 ring-white/60' : ''}`}
+                  <div className="space-y-6">
+                    <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold text-gray-900 leading-tight">
+                      <span className="bg-gradient-to-r from-orange-600 via-orange-500 to-red-500 bg-clip-text text-transparent animate-gradient-text">
+                        Shri Karni
+                      </span>
+                      <br />
+                      <span className="text-gray-800">Home Solutions</span>
+                    </h1>
+                    <p className="text-xl md:text-2xl text-gray-600 max-w-2xl leading-relaxed">
+                      Transform your home with our premium collection of furniture, decor, and essentials. 
+                      <span className="text-orange-600 font-semibold">Quality products at unbeatable prices.</span>
+                    </p>
+                  </div>
+                  
+                  {/* Enhanced CTA Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                    <Button 
+                      size="lg" 
+                      className="group px-10 py-5 text-xl bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-110 hover:-translate-y-1 rounded-full font-semibold"
                     >
-                      {cat.name}
+                      Shop Now 
+                      <ArrowRight className="ml-3 h-6 w-6 group-hover:translate-x-1 transition-transform duration-300" />
                     </Button>
-                  ))}
-                </div>
-              )}
+                    <Link href="/categories">
+                      <Button 
+                        size="lg" 
+                        variant="outline"
+                        className="group px-10 py-5 text-xl border-3 border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white transition-all duration-500 transform hover:scale-105 hover:-translate-y-1 rounded-full font-semibold shadow-lg hover:shadow-2xl"
+                      >
+                        Explore Categories
+                        <Package className="ml-3 h-6 w-6 group-hover:rotate-12 transition-transform duration-300" />
+                      </Button>
+                    </Link>
+                  </div>
 
-              {/* CTAs + trust */}
-              <div className="mt-6 flex flex-wrap items-center gap-3">
-                <Button className="bg-white text-orange-600 hover:bg-gray-100">
-                  Shop Now
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-                <Button className="bg-transparent border border-white/40 text-white hover:bg-white/10">
-                  Explore Categories
-                </Button>
-              </div>
+                  {/* Enhanced Trust Indicators */}
+                  <div className="flex flex-wrap justify-center lg:justify-start gap-8 pt-8">
+                    <div className="flex items-center gap-3 text-base text-gray-700 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105">
+                      <div className="p-2 bg-orange-100 rounded-full">
+                        <Truck className="h-6 w-6 text-orange-600" />
+                      </div>
+                      <span className="font-medium">Free Delivery</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-base text-gray-700 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105">
+                      <div className="p-2 bg-green-100 rounded-full">
+                        <ShieldCheck className="h-6 w-6 text-green-600" />
+                      </div>
+                      <span className="font-medium">Quality Assured</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-base text-gray-700 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105">
+                      <div className="p-2 bg-yellow-100 rounded-full">
+                        <Star className="h-6 w-6 text-yellow-600" />
+                      </div>
+                      <span className="font-medium">5000+ Happy Customers</span>
+                    </div>
+                  </div>
 
-              <div className="mt-6 flex flex-wrap gap-6 text-sm opacity-90">
-                <div className="flex items-center gap-2">
-                  <Truck className="h-4 w-4" /> Fast Delivery
+                  {/* Customer Reviews Preview */}
+                  <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-orange-100 animate-fade-in-up-delayed">
+                    <div className="flex items-center gap-4 mb-3">
+                      <div className="flex">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
+                        ))}
+                      </div>
+                      <span className="text-sm text-gray-600">4.9/5 from 2,847 reviews</span>
+                    </div>
+                    <p className="text-gray-700 italic">
+                      "Amazing quality and fast delivery! My home looks completely transformed."
+                    </p>
+                    <p className="text-sm text-gray-500 mt-2">- Priya S., Mumbai</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4" /> Trusted Sellers
-                </div>
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4" /> Secure Purchase
+
+                {/* Right Content - Hero Image/Carousel */}
+                <div className="relative">
+                  <div className="relative bg-white rounded-2xl shadow-2xl overflow-hidden">
+                    <Carousel className="w-full">
+                      <CarouselContent>
+                        <CarouselItem>
+                          <div className="relative w-full h-80 md:h-96 lg:h-[450px]">
+                            <img
+                              src="/banner.png"
+                              alt="Shri Karni Home Solutions - Premium Furniture"
+                              className="absolute inset-0 w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                          </div>
+                        </CarouselItem>
+                        {/* Add more carousel items if you have more images */}
+                        <CarouselItem>
+                          <div className="relative w-full h-80 md:h-96 lg:h-[450px] bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
+                            <div className="text-center space-y-4">
+                              <Package className="h-16 w-16 text-orange-600 mx-auto" />
+                              <h3 className="text-2xl font-bold text-gray-900">Premium Quality</h3>
+                              <p className="text-gray-600 max-w-sm">Handpicked products for your perfect home</p>
+                            </div>
+                          </div>
+                        </CarouselItem>
+                        <CarouselItem>
+                          <div className="relative w-full h-80 md:h-96 lg:h-[450px] bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                            <div className="text-center space-y-4">
+                              <ShoppingBag className="h-16 w-16 text-blue-600 mx-auto" />
+                              <h3 className="text-2xl font-bold text-gray-900">Easy Shopping</h3>
+                              <p className="text-gray-600 max-w-sm">Browse, select, and get delivered to your doorstep</p>
+                            </div>
+                          </div>
+                        </CarouselItem>
+                      </CarouselContent>
+                      <CarouselPrevious className="left-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white" />
+                      <CarouselNext className="right-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white" />
+                    </Carousel>
+                  </div>
+                  
+                  {/* Floating Stats */}
+                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-full max-w-sm">
+                    <div className="bg-white rounded-xl shadow-lg p-4 mx-4">
+                      <div className="grid grid-cols-3 gap-4 text-center">
+                        <div>
+                          <div className="text-2xl font-bold text-orange-600">1000+</div>
+                          <div className="text-xs text-gray-600">Products</div>
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-orange-600">5000+</div>
+                          <div className="text-xs text-gray-600">Customers</div>
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-orange-600">4.8★</div>
+                          <div className="text-xs text-gray-600">Rating</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
+          </div>
+          
+          {/* Decorative Elements */}
+          <div className="absolute top-10 left-10 w-20 h-20 bg-orange-200 rounded-full opacity-50 animate-pulse"></div>
+          <div className="absolute bottom-10 right-10 w-16 h-16 bg-blue-200 rounded-full opacity-50 animate-pulse delay-1000"></div>
+          <div className="absolute top-1/2 left-5 w-8 h-8 bg-yellow-200 rounded-full opacity-30 animate-bounce delay-500"></div>
+        </div>
 
-            {/* Right: Visuals */}
-            <div className="relative h-72 md:h-96">
-              <div className="absolute inset-0 rounded-2xl overflow-hidden ring-1 ring-white/30 shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
-                <div
-                  className="absolute inset-0 bg-center bg-cover scale-110"
-                  style={{ 
-                    backgroundImage: 'url("https://i.pinimg.com/736x/15/52/4a/15524a638c9f495ccec2dbb84fc3e97b.jpg")',
-                    backgroundPosition: 'center 45%'
-                  }}
-                />
-                {/* Frosted glass overlay + neutral scrim */}
-                <div className="absolute inset-0 bg-white/8 backdrop-blur-sm backdrop-saturate-125" />
-                <div className="absolute inset-0 bg-gradient-to-tr from-black/10 via-transparent to-transparent" />
-              </div>
+        {/* Search Bar moved below cards */}
+      </div>
 
-              {/* Floating cards */}
-              <div className="absolute top-6 right-6 bg-white text-gray-900 rounded-xl shadow-xl p-4 w-40">
-                <div className="flex items-center justify-between">
-                  <Star className="h-5 w-5 text-orange-500" />
-                  <span className="text-xs text-gray-500">Top Rated</span>
+      {/* Random Products Grid */}
+      <div className="relative mt-6 md:mt-10 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          {randomGroups.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {randomGroups.slice(0, 4).map((group, idx) => (
+                <Card key={idx} className="overflow-hidden shadow-2xl border-0">
+                  <CardContent className="p-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      {group.map((p, i) => {
+                        const img = (Array.isArray((p as any).images) && (p as any).images.length > 0)
+                          ? (p as any).images[0]
+                          : (p.imageUrl || '/placeholder.svg')
+                        const id = p?.id || ''
+                        return (
+                          <Link key={`${id}-${i}`} href={id ? `/products/${id}` : '#'} className="block">
+                            <div className="relative w-full" style={{ paddingTop: '100%' }}>
+                              <img
+                                src={img}
+                                alt={p?.name || 'Product'}
+                                className="absolute inset-1 md:inset-2 object-contain bg-white rounded"
+                              />
+                            </div>
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Search Bar (relocated below cards) */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        <div className="bg-white rounded-lg shadow-xl p-1 flex">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Search products..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && searchTerm.trim()) {
+                  window.location.href = `/search?q=${encodeURIComponent(searchTerm.trim())}`
+                }
+              }}
+              className="pl-10 pr-4 py-5 text-base border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+            />
+          </div>
+          <Button 
+            size="lg" 
+            className="px-6 py-5 text-base bg-orange-600 hover:bg-orange-700 text-white"
+            onClick={() => {
+              if (searchTerm.trim()) {
+                window.location.href = `/search?q=${encodeURIComponent(searchTerm.trim())}`
+              } else {
+                clearFilters()
+              }
+            }}
+          >
+            {searchTerm.trim() ? 'Search' : 'Clear'}
+          </Button>
+        </div>
+
+        {/* Quick category pills */}
+        <div className="mt-4 flex flex-wrap gap-2 justify-center">
+          <Button
+            variant="outline"
+            onClick={() => handleCategorySelect('all')}
+            className={`h-8 px-3 rounded-full ${selectedCategory === 'all' ? 'bg-orange-100 border-orange-300 text-orange-700' : 'bg-white'}`}
+          >
+            All
+          </Button>
+          {categories.slice(0, 6).map((cat) => (
+            <Button
+              key={cat.id}
+              variant="outline"
+              onClick={() => handleCategorySelect(cat.name)}
+              className={`h-8 px-3 rounded-full ${selectedCategory === cat.name ? 'bg-orange-100 border-orange-300 text-orange-700' : 'bg-white'}`}
+            >
+              {cat.name}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+        {/* Stats Section (moved below cards) */}
+        <div className="bg-white border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+            <div className="grid grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+              <div className="text-center">
+                <div className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 bg-orange-100 rounded-lg mx-auto mb-2 md:mb-4">
+                  <Package className="h-5 w-5 md:h-6 md:w-6 text-orange-600" />
                 </div>
-                <p className="mt-2 text-sm">Quality you can trust</p>
+                <h3 className="text-lg md:text-2xl font-bold text-gray-900">{products.length}+</h3>
+                <p className="text-xs md:text-sm text-gray-600">Quality Products</p>
               </div>
-
-              <div className="absolute bottom-8 left-6 bg-white text-gray-900 rounded-xl shadow-xl p-4 w-48">
-                <div className="flex items-center gap-2">
-                  <Package className="h-5 w-5 text-orange-500" />
-                  <p className="font-semibold">{products.length}+ Products</p>
+              <div className="text-center">
+                <div className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 bg-orange-100 rounded-lg mx-auto mb-2 md:mb-4">
+                  <Users className="h-5 w-5 md:h-6 md:w-6 text-orange-600" />
                 </div>
-                <p className="mt-1 text-xs text-gray-600">New arrivals every week</p>
+                <h3 className="text-lg md:text-2xl font-bold text-gray-900">50+</h3>
+                <p className="text-xs md:text-sm text-gray-600">Trusted Sellers</p>
               </div>
-
-              <div className="absolute top-24 left-10 bg-white text-gray-900 rounded-xl shadow-xl p-4 w-36">
-                <p className="text-xs text-gray-500 mb-1">Popular</p>
-                <p className="font-semibold">Cement, Steel, Paints</p>
+              <div className="text-center">
+                <div className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 bg-orange-100 rounded-lg mx-auto mb-2 md:mb-4">
+                  <Star className="h-5 w-5 md:h-6 md:w-6 text-orange-600" />
+                </div>
+                <h3 className="text-lg md:text-2xl font-bold text-gray-900">4.8</h3>
+                <p className="text-xs md:text-sm text-gray-600">Customer Rating</p>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Stats Section */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
-          <div className="grid grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-            <div className="text-center">
-              <div className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 bg-orange-100 rounded-lg mx-auto mb-2 md:mb-4">
-                <Package className="h-5 w-5 md:h-6 md:w-6 text-orange-600" />
-              </div>
-              <h3 className="text-lg md:text-2xl font-bold text-gray-900">{products.length}+</h3>
-              <p className="text-xs md:text-sm text-gray-600">Quality Products</p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 bg-orange-100 rounded-lg mx-auto mb-2 md:mb-4">
-                <Users className="h-5 w-5 md:h-6 md:w-6 text-orange-600" />
-              </div>
-              <h3 className="text-lg md:text-2xl font-bold text-gray-900">50+</h3>
-              <p className="text-xs md:text-sm text-gray-600">Trusted Sellers</p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 bg-orange-100 rounded-lg mx-auto mb-2 md:mb-4">
-                <Star className="h-5 w-5 md:h-6 md:w-6 text-orange-600" />
-              </div>
-              <h3 className="text-lg md:text-2xl font-bold text-gray-900">4.8</h3>
-              <p className="text-xs md:text-sm text-gray-600">Customer Rating</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Categories Section */}
         {categories.length > 0 && (
           <div id="categories" className="mb-12">
@@ -392,27 +544,28 @@ const HomePage = () => {
                       key={category.id}
                       className="basis-1/3 sm:basis-1/4 md:basis-1/6 lg:basis-1/8"
                     >
-                      <Card
-                        className={`cursor-pointer transition-all hover:shadow-md ${
-                          selectedCategory === category.name ? 'ring-2 ring-orange-500 bg-orange-50' : ''
-                        }`}
-                        onClick={() => handleCategorySelect(category.name)}
-                      >
-                        <CardContent className="p-3 text-center">
-                          {category.imageUrl ? (
-                            <img
-                              src={category.imageUrl || "/placeholder.svg"}
-                              alt={category.name}
-                              className="w-16 h-16 object-contain rounded-lg mx-auto mb-1.5"
-                            />
-                          ) : (
-                            <div className="w-16 h-16 bg-gray-100 rounded-lg mx-auto mb-1.5 flex items-center justify-center">
-                              <Package className="h-8 w-8 text-gray-600" />
-                            </div>
-                          )}
-                          <p className="font-medium text-xs truncate">{category.name}</p>
-                        </CardContent>
-                      </Card>
+                      <Link href={`/categories?category=${encodeURIComponent(category.name)}`}>
+                        <Card
+                          className={`cursor-pointer transition-all hover:shadow-md ${
+                            selectedCategory === category.name ? 'ring-2 ring-orange-500 bg-orange-50' : ''
+                          }`}
+                        >
+                          <CardContent className="p-3 text-center">
+                            {category.imageUrl ? (
+                              <img
+                                src={category.imageUrl || "/placeholder.svg"}
+                                alt={category.name}
+                                className="w-16 h-16 object-contain rounded-lg mx-auto mb-1.5"
+                              />
+                            ) : (
+                              <div className="w-16 h-16 bg-gray-100 rounded-lg mx-auto mb-1.5 flex items-center justify-center">
+                                <Package className="h-8 w-8 text-gray-600" />
+                              </div>
+                            )}
+                            <p className="font-medium text-xs truncate">{category.name}</p>
+                          </CardContent>
+                        </Card>
+                      </Link>
                     </CarouselItem>
                   ))}
                 </CarouselContent>
@@ -428,7 +581,7 @@ const HomePage = () => {
           <div className="flex justify-between items-center mb-6">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
-                {selectedCategory === 'all' ? 'All Products' : selectedCategory}
+                {selectedCategory === 'all' ? 'Products by Category' : `${selectedCategory} Products`}
               </h2>
               <p className="text-gray-600">
                 {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''} found
@@ -443,7 +596,46 @@ const HomePage = () => {
             )}
           </div>
 
-          {filteredProducts.length === 0 ? (
+          {selectedCategory === 'all' && !searchTerm ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {categories.map((cat) => {
+                const catProducts = products.filter(
+                  (p) => (p.category || '').trim().toLowerCase() === (cat.name || '').trim().toLowerCase()
+                )
+                if (catProducts.length === 0) return null
+                return (
+                  <Card key={cat.id} className="overflow-hidden">
+                    <div className="flex items-center justify-between p-4">
+                      <div className="flex items-center gap-3">
+                        {cat.imageUrl ? (
+                          <img
+                            src={cat.imageUrl}
+                            alt={cat.name}
+                            className="w-8 h-8 rounded-md object-cover"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 bg-gray-100 rounded-md flex items-center justify-center">
+                            <Package className="h-5 w-5 text-gray-600" />
+                          </div>
+                        )}
+                        <h3 className="text-base font-semibold text-gray-900">{cat.name}</h3>
+                      </div>
+                      <Button size="sm" variant="ghost" onClick={() => handleCategorySelect(cat.name)}>
+                        View all <ArrowRight className="ml-1 h-4 w-4" />
+                      </Button>
+                    </div>
+                    <CardContent className="p-4 pt-0">
+                      <div className="grid grid-cols-2 gap-4">
+                        {catProducts.slice(0, 4).map((product) => (
+                          <ProductCard key={product.id} product={product} compact square />
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+          ) : filteredProducts.length === 0 ? (
             <div className="text-center py-12">
               <ShoppingBag className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
@@ -462,7 +654,7 @@ const HomePage = () => {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
               {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} compact />
+                <ProductCard key={product.id} product={product} compact square />
               ))}
             </div>
           )}
@@ -503,7 +695,6 @@ const HomePage = () => {
             </div>
           </div>
         )}
-      </div>
     </div>
   )
 }

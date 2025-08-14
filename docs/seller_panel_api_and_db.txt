@@ -1,0 +1,365 @@
+SELLER PANEL - Database Structure and REST Methods (Firebase Realtime Database)
+
+Author: Cascade
+Scope: Mobile app integration for seller panel (create/update products, inventory, orders, payouts, messaging)
+
+========================================
+1) ENV AND BASE URL
+========================================
+- Realtime DB base URL:
+  https://<PROJECT_ID>-default-rtdb.firebaseio.com
+  (Replace <PROJECT_ID> with your Firebase project. Example alias: https://shri-karni-ecommerce-default-rtdb.firebaseio.com)
+- All REST requests end with .json and should include auth param:
+  ?auth=<FIREBASE_ID_TOKEN>
+- The ID token is obtained after seller logs in via Firebase Auth in the mobile app.
+
+Android (Kotlin) example to get ID token:
+  FirebaseAuth.getInstance().currentUser?.getIdToken(true)?.addOnSuccessListener { result ->
+      val token = result.token // pass as ?auth=token
+  }
+
+iOS (Swift) example:
+  Auth.auth().currentUser?.getIDToken(completion: { token, error in
+      // use token in REST calls
+  })
+
+========================================
+2) RECOMMENDED DB STRUCTURE
+========================================
+Notes:
+- Existing nodes in this project: products, categories, users (with role seller), orders, siteSettings.
+- We keep sellers under users (role='seller') and also add seller-centric indexes for fast queries.
+
+/users/{uid}
+  role: "seller" | "customer" | "admin"
+  email: string
+  name: string
+  phone: string
+  avatarUrl: string
+  createdAt: number (ms)
+  // Seller-only fields (present when role==='seller')
+  seller:
+    status: "active" | "pending" | "suspended"
+    gstin: string
+    address:
+      line1: string
+      line2: string
+      city: string
+      state: string
+      pincode: string
+    bank:
+      accountName: string
+      accountNumber: string
+      ifsc: string
+      upi: string
+    stats:
+      productsCount: number
+      totalOrders: number
+      revenue: number
+      payoutPending: number
+    updatedAt: number (ms)
+
+/products/{productId}
+  sellerId: string (user uid)
+  name: string
+  descriptionHtml: string (Quill/HTML supported)
+  categoryId: string
+  price: number
+  mrp: number
+  sku: string
+  stock: number
+  lowStockThreshold: number
+  images: { [index: string]: string } // array-like {"0": "https://...", ...}
+  attributes: { [key: string]: string } // e.g., color: "Blue", size: "M"
+  variants: {
+    [variantId: string]: {
+      sku: string
+      price: number
+      mrp: number
+      stock: number
+      attributes: { [key: string]: string }
+    }
+  }
+  status: "active" | "draft" | "out-of-stock"
+  createdAt: number (ms)
+  updatedAt: number (ms)
+
+/inventory/{sellerId}/{productId}
+  stock: number
+  lowStockThreshold: number
+  updatedAt: number (ms)
+
+/categories/{categoryId}
+  name: string
+  imageUrl: string
+
+/orders/{orderId}
+  createdAt: number (ms)
+  status: "pending" | "paid" | "processing" | "shipped" | "delivered" | "cancelled" | "returned"
+  payment: { status: "pending"|"paid"|"refunded", method: string, txnId: string }
+  shipping: { name, phone, address:{ line1,line2,city,state,pincode } }
+  items: {
+    [itemId: string]: {
+      productId: string
+      sellerId: string
+      qty: number
+      price: number // unit price at time of order
+      subtotal: number // qty*price
+      status: "pending" | "processing" | "shipped" | "delivered" | "cancelled" | "returned" // seller line-item status
+    }
+  }
+  totals: { items: number, shipping: number, tax: number, grandTotal: number }
+
+/sellerOrdersIndex/{sellerId}/{orderId}: true
+  // Fast lookup of orders for a specific seller
+
+/payouts/{payoutId}
+  sellerId: string
+  amount: number
+  status: "pending" | "processing" | "paid" | "failed"
+  periodStart: number (ms)
+  periodEnd: number (ms)
+  orders: { [orderId: string]: true }
+  createdAt: number (ms)
+  transferredAt: number (ms|null)
+
+/payoutRequests/{requestId}
+  sellerId: string
+  amountRequested: number
+  note: string
+  status: "requested" | "approved" | "rejected" | "paid"
+  createdAt: number (ms)
+
+/returns/{returnId}
+  orderId: string
+  productId: string
+  sellerId: string
+  reason: string
+  status: "requested" | "approved" | "rejected" | "picked" | "refunded"
+  createdAt: number (ms)
+
+/messages/{threadId}
+  participants: { [uid: string]: true }
+  lastMessageAt: number (ms)
+  messages: {
+    [msgId: string]: { from: string(uid), text: string, createdAt: number(ms) }
+  }
+
+/analytics/sellers/{sellerId}/daily/{YYYYMMDD}
+  orders: number
+  revenue: number
+  units: number
+
+========================================
+3) SECURITY RULES (ESSENTIAL)
+========================================
+Example rules (high level). Ensure sellers only write their own resources.
+
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid"
+      }
+    },
+    "products": {
+      "$pid": {
+        ".read": true,
+        ".write": "auth != null && newData.child('sellerId').val() === auth.uid"
+      }
+    },
+    "inventory": {
+      "$sellerId": {
+        "$pid": {
+          ".read": "auth != null && $sellerId === auth.uid",
+          ".write": "auth != null && $sellerId === auth.uid"
+        }
+      }
+    },
+    "orders": {
+      "$oid": {
+        ".read": "auth != null && (data.child('items').children().anyWhere(i => i.child('sellerId').val() === auth.uid) || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        ".write": false // orders are written by checkout/backend only
+      }
+    },
+    "sellerOrdersIndex": {
+      "$sellerId": {
+        ".read": "auth != null && $sellerId === auth.uid",
+        ".write": false
+      }
+    },
+    "payoutRequests": {
+      "$rid": {
+        ".read": "auth != null && (data.child('sellerId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        ".write": "auth != null && newData.child('sellerId').val() === auth.uid"
+      }
+    },
+    "payouts": {
+      "$pid": {
+        ".read": "auth != null && (data.child('sellerId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        ".write": "root.child('users').child(auth.uid).child('role').val() === 'admin'"
+      }
+    },
+    "messages": {
+      "$tid": {
+        ".read": "auth != null && data.child('participants').child(auth.uid).exists()",
+        ".write": "auth != null && data.child('participants').child(auth.uid).exists()"
+      }
+    }
+  }
+}
+
+========================================
+4) REST METHODS (cURL EXAMPLES)
+========================================
+Base: https://<PROJECT>.firebaseio.com
+Header: Content-Type: application/json
+Auth: ?auth=<ID_TOKEN>
+
+4.1 Create Product (POST + multi-location PATCH for indexes)
+Step A: POST to create product ID
+curl -X POST "https://<PROJECT>.firebaseio.com/products.json?auth=<ID_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+        "sellerId":"SELLER_UID",
+        "name":"Premium Pillow",
+        "descriptionHtml":"<p>Soft & comfy</p>",
+        "categoryId":"bedding",
+        "price":699,
+        "mrp":999,
+        "sku":"PILLOW-PRM-01",
+        "stock":50,
+        "lowStockThreshold":5,
+        "images": {"0":"https://.../pillow.jpg"},
+        "status":"active",
+        "createdAt": 1734290000000,
+        "updatedAt": 1734290000000
+      }'
+Response:
+  { "name": "-NvAbCdEfGhIjKlMnOpq" } // productId
+
+Step B: Multi-location PATCH to update inventory mirror
+curl -X PATCH "https://<PROJECT>.firebaseio.com/.json?auth=<ID_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+        "/inventory/SELLER_UID/-NvAbCdEfGhIjKlMnOpq": {
+          "stock": 50,
+          "lowStockThreshold": 5,
+          "updatedAt": 1734290000000
+        },
+        "/users/SELLER_UID/seller/stats/productsCount": 51
+      }'
+
+4.2 Update Product (PUT)
+curl -X PUT "https://<PROJECT>.firebaseio.com/products/-NvAbCdEfGhIjKlMnOpq.json?auth=<ID_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+        "sellerId":"SELLER_UID",
+        "name":"Premium Pillow (New)",
+        "descriptionHtml":"<p>Even softer</p>",
+        "categoryId":"bedding",
+        "price":749,
+        "mrp":999,
+        "sku":"PILLOW-PRM-01",
+        "stock":45,
+        "lowStockThreshold":5,
+        "images": {"0":"https://.../pillow.jpg"},
+        "status":"active",
+        "createdAt": 1734290000000,
+        "updatedAt": 1734300000000
+      }'
+
+4.3 Partial Update Product (PATCH)
+curl -X PATCH "https://<PROJECT>.firebaseio.com/products/-NvAbCdEfGhIjKlMnOpq.json?auth=<ID_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{ "price": 799, "updatedAt": 1734310000000 }'
+
+4.4 Update Inventory (seller-only)
+curl -X PATCH "https://<PROJECT>.firebaseio.com/inventory/SELLER_UID/-NvAbCdEfGhIjKlMnOpq.json?auth=<ID_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{ "stock": 42, "updatedAt": 1734315000000 }'
+
+4.5 List Seller Products (filter client-side)
+Option 1: GET all then filter sellerId on device (simple, but heavy at scale)
+  GET /products.json?auth=<ID_TOKEN>
+Option 2: Maintain sellerProducts index (recommended for scale):
+  /sellerProducts/{sellerId}/{productId}: true
+Then:
+  GET /sellerProducts/SELLER_UID.json?auth=<ID_TOKEN>
+  -> iterate productIds, and fetch details (use shallow=true for just keys)
+
+4.6 Get Orders for Seller
+GET seller order IDs:
+  curl "https://<PROJECT>.firebaseio.com/sellerOrdersIndex/SELLER_UID.json?auth=<ID_TOKEN>&shallow=true"
+Then hydrate each:
+  curl "https://<PROJECT>.firebaseio.com/orders/<ORDER_ID>.json?auth=<ID_TOKEN>"
+
+4.7 Update Line-Item Status by Seller
+PATCH line item status under order items where sellerId == SELLER_UID
+curl -X PATCH "https://<PROJECT>.firebaseio.com/orders/<ORDER_ID>/items/<ITEM_ID>.json?auth=<ID_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{ "status": "shipped" }'
+
+4.8 Create Payout Request
+curl -X POST "https://<PROJECT>.firebaseio.com/payoutRequests.json?auth=<ID_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+        "sellerId": "SELLER_UID",
+        "amountRequested": 12500,
+        "note": "June settlement",
+        "status": "requested",
+        "createdAt": 1734319000000
+      }'
+
+4.9 Messaging (Seller <-> Admin)
+Create thread (first message):
+POST /messages.json
+  {
+    "participants": {"SELLER_UID": true, "ADMIN_UID": true},
+    "lastMessageAt": 1734320000000,
+    "messages": {
+      "auto1": {"from":"SELLER_UID", "text":"Hello!", "createdAt":1734320000000}
+    }
+  }
+Append message:
+POST /messages/<THREAD_ID>/messages.json
+  {"from":"SELLER_UID","text":"Need help","createdAt":1734320500000}
+Also update lastMessageAt via multi-location PATCH.
+
+4.10 Seller Profile Update
+PATCH /users/SELLER_UID/seller.json
+  { "address": {"line1":"..."}, "bank": {"upi":"..."}, "updatedAt": 1734321000000 }
+
+========================================
+5) MOBILE APP HINTS
+========================================
+- Prefer Firebase SDKs (Android/iOS) for real-time streams; use REST when you need deterministic multi-location writes or are calling from serverless functions.
+- For lists (products, orders) use server-driven indexes like sellerProducts and sellerOrdersIndex to avoid downloading entire collections.
+- Use shallow=true when you only need keys, then fetch details in parallel.
+- Always update updatedAt on writes for sync/conflict resolution.
+
+========================================
+6) OPTIONAL: ADDITIONAL INDEXES (RECOMMENDED)
+========================================
+/sellerProducts/{sellerId}/{productId}: true
+/sellerThreads/{sellerId}/{threadId}: true
+/sellerPayouts/{sellerId}/{payoutId}: true
+
+These improve mobile fetch times.
+
+========================================
+7) ERROR CODES & VALIDATION (BASIC)
+========================================
+- Ensure role check: users/<uid>/role == 'seller' before enabling seller features.
+- Validate price >= 0, stock >= 0.
+- Enforce stock at order time on backend (Cloud Functions) to prevent oversell.
+
+========================================
+8) MIGRATION FROM CURRENT STRUCTURE
+========================================
+- Existing nodes already compatible: products, categories, users, orders.
+- Add: inventory, sellerOrdersIndex, payoutRequests, payouts, messages, optional sellerProducts.
+- Update security rules accordingly.
+
+END OF SPEC

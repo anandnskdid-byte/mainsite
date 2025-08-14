@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/hooks/use-auth'
 import { useCart } from '@/contexts/cart-context'
-import { ShoppingCart, Package, User, Palette, Ruler } from 'lucide-react'
+import { ShoppingCart, Package, User, Palette, Ruler, Heart, Star } from 'lucide-react'
 import type { Product } from '@/types'
 
 interface ProductCardProps {
@@ -17,14 +17,16 @@ interface ProductCardProps {
   onEdit?: (product: Product) => void
   onDelete?: (productId: string) => void
   compact?: boolean
+  square?: boolean
 }
 
-export function ProductCard({ product, compact = false }: ProductCardProps) {
+export function ProductCard({ product, compact = false, square = false }: ProductCardProps) {
   const { user, userData } = useAuth()
   const { addToCart } = useCart()
   const router = useRouter()
   const [isAdding, setIsAdding] = useState(false)
   const [activeImage, setActiveImage] = useState(0)
+  const [wishlisted, setWishlisted] = useState(false)
 
   const handleAddToCart = async () => {
     // Check if user is authenticated and is a customer
@@ -80,8 +82,83 @@ export function ProductCard({ product, compact = false }: ProductCardProps) {
     : (productImageUrl ? [productImageUrl] : [])
   const isNew = typeof product?.createdAt === 'number' && (Date.now() - product.createdAt) < (14 * 24 * 60 * 60 * 1000)
 
-  // Compact card: full image + title only
+  // Optional/extended fields for richer UI (fallback-safe)
+  const mrp: number = (product as any)?.mrp || 0
+  const hasDiscount = mrp > productPrice && productPrice > 0
+  const discountPercent = hasDiscount ? Math.round(((mrp - productPrice) / mrp) * 100) : 0
+  const rating: number | null = typeof (product as any)?.rating === 'number' ? (product as any).rating : null
+  const reviewsCount: number | null = typeof (product as any)?.reviewsCount === 'number' ? (product as any).reviewsCount : null
+
+  // Wishlist persistence (localStorage)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && productId) {
+      try {
+        const arr = JSON.parse(localStorage.getItem('wishlist') || '[]')
+        setWishlisted(Array.isArray(arr) && arr.includes(productId))
+      } catch {}
+    }
+  }, [productId])
+
+  const toggleWishlist = (e: any) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (typeof window === 'undefined' || !productId) return
+    try {
+      const arr = JSON.parse(localStorage.getItem('wishlist') || '[]')
+      let next = Array.isArray(arr) ? arr : []
+      if (wishlisted) {
+        next = next.filter((id: string) => id !== productId)
+      } else {
+        if (!next.includes(productId)) next.push(productId)
+      }
+      localStorage.setItem('wishlist', JSON.stringify(next))
+      setWishlisted(!wishlisted)
+    } catch {
+      // no-op
+    }
+  }
+
+  // Compact card: image + title only (supports square thumbnail)
   if (compact) {
+    if (square) {
+      return (
+        <Card className="h-full flex flex-col hover:shadow-md transition-shadow">
+          <Link href={productId ? `/products/${productId}` : '#'} className="block">
+            <div className="relative bg-white">
+              <div className="relative w-full" style={{ paddingTop: '100%' }}>
+                {images.length > 0 ? (
+                  <img
+                    src={images[0] || "/placeholder.svg"}
+                    alt={productName}
+                    className="absolute inset-0 h-full w-full object-contain p-2 rounded-t-lg"
+                    onError={(e) => {
+                      const target = (e.target as HTMLImageElement)
+                      target.style.display = 'none'
+                      const next = (target.parentElement?.querySelector('[data-fallback]') as HTMLElement | null)
+                      next && next.classList.remove('hidden')
+                    }}
+                  />
+                ) : null}
+                <div
+                  data-fallback
+                  className={`absolute inset-0 bg-gray-100 rounded-t-lg flex items-center justify-center ${images.length > 0 ? 'hidden' : ''}`}
+                >
+                  <Package className="h-10 w-10 text-gray-400" />
+                </div>
+              </div>
+            </div>
+            <CardContent className="p-3">
+              <h3 className="font-medium text-sm line-clamp-2 text-center">
+                {productName}
+              </h3>
+              <div className="mt-1 text-sm font-semibold text-orange-600 text-center">
+                ₹{productPrice.toLocaleString('en-IN')}
+              </div>
+            </CardContent>
+          </Link>
+        </Card>
+      )
+    }
     return (
       <Card className="h-full flex flex-col hover:shadow-md transition-shadow">
         <Link href={productId ? `/products/${productId}` : '#'} className="block">
@@ -146,8 +223,14 @@ export function ProductCard({ product, compact = false }: ProductCardProps) {
           </div>
         )}
 
+        {hasDiscount && (
+          <Badge className="absolute top-2 left-2 bg-red-600 hover:bg-red-600">
+            -{discountPercent}%
+          </Badge>
+        )}
+
         {isNew && (
-          <Badge className="absolute top-2 left-2 bg-green-600 hover:bg-green-600">
+          <Badge className={`absolute ${hasDiscount ? 'top-10' : 'top-2'} left-2 bg-green-600 hover:bg-green-600`}>
             New
           </Badge>
         )}
@@ -155,6 +238,16 @@ export function ProductCard({ product, compact = false }: ProductCardProps) {
         <Badge className="absolute top-2 right-2 bg-orange-500 hover:bg-orange-500">
           {productCategory}
         </Badge>
+
+        {/* Wishlist toggle */}
+        <button
+          type="button"
+          onClick={(e) => toggleWishlist(e)}
+          aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+          className="absolute bottom-2 right-2 h-9 w-9 rounded-full bg-white/90 backdrop-blur shadow hover:bg-white flex items-center justify-center"
+        >
+          <Heart className={`h-5 w-5 ${wishlisted ? 'text-red-500 fill-red-500' : 'text-gray-600'}`} />
+        </button>
       </div>
 
       {images.length > 1 && (
@@ -192,6 +285,19 @@ export function ProductCard({ product, compact = false }: ProductCardProps) {
         <p className="text-gray-600 text-sm mb-3 line-clamp-2">
           {productDescription}
         </p>
+
+        {/* Rating (if available) */}
+        {typeof rating === 'number' && (
+          <div className="flex items-center gap-1 mb-3">
+            {[0,1,2,3,4].map((i) => (
+              <Star
+                key={i}
+                className={`h-4 w-4 ${i < Math.round(rating) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`}
+              />
+            ))}
+            <span className="text-sm text-gray-600 ml-1">{rating.toFixed(1)}{reviewsCount ? ` (${reviewsCount})` : ''}</span>
+          </div>
+        )}
 
         <div className="flex items-center text-sm text-gray-500 mb-3">
           <User className="h-4 w-4 mr-1" />
@@ -237,13 +343,21 @@ export function ProductCard({ product, compact = false }: ProductCardProps) {
           )}
         </div>
 
-        <div className="flex justify-between items-center">
-          <span className="text-2xl font-bold text-orange-600">
-            ₹{productPrice.toLocaleString()}
-          </span>
-          <span className="text-sm text-gray-500">
-            Stock: {productStock}
-          </span>
+        <div className="flex items-baseline justify-between">
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-orange-600">
+              ₹{productPrice.toLocaleString('en-IN')}
+            </span>
+            {hasDiscount && (
+              <span className="text-sm text-gray-400 line-through">
+                ₹{mrp.toLocaleString('en-IN')}
+              </span>
+            )}
+            {hasDiscount && (
+              <Badge className="bg-green-600 hover:bg-green-600 text-white">-{discountPercent}%</Badge>
+            )}
+          </div>
+          <span className="text-sm text-gray-500">Stock: {productStock}</span>
         </div>
         {productStock > 0 && productStock <= 5 && (
           <div className="mt-2 text-xs text-red-600">
