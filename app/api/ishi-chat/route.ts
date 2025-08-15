@@ -150,7 +150,12 @@ You MUST reply strictly as JSON with the following structure:
     "phone": string|null
   }
 }
-No extra keys. No markdown. No code fences.`
+No extra keys. No markdown. No code fences.
+Rules:
+- For any complaint/ticket creation, collect customer's name and phone first (email optional).
+- If name or phone are missing in Context->Customer, ask for them in your reply and set "action": "none".
+- After details are available, include them in "customerUpdate" and set "action": "create_ticket" with an appropriate "ticketSubject".
+`
 
     const contextBlock = `
 Context:
@@ -236,6 +241,13 @@ Products (top 20):\n${productLines || '- none'}
     return NextResponse.json(safe)
   } catch (err: any) {
     console.error('Ishi API error:', err)
-    return NextResponse.json({ error: 'Failed to process request' }, { status: 500 })
+    // Degrade gracefully so UI continues working
+    return NextResponse.json({
+      reply: 'Maaf kijiye, AI se jawaab laane mein samasya hui. Kripya thodi der baad dubara koshish karein.',
+      action: 'none',
+      ticketSubject: null,
+      ticketId: null,
+      customerUpdate: { name: null, email: null, phone: null },
+    })
   }
 }

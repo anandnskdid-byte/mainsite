@@ -68,6 +68,9 @@ export default function IshiChatWidget() {
   const [customer, setCustomer] = useState<{ name?: string; email?: string; phone?: string }>({})
   const custIdRef = useRef<string>("")
   const listRef = useRef<HTMLDivElement>(null)
+  const [awaitingContact, setAwaitingContact] = useState(false)
+  const [pendingTicketSubject, setPendingTicketSubject] = useState<string | null>(null)
+  const [contactDraft, setContactDraft] = useState<{ name: string; phone: string; email: string }>({ name: "", phone: "", email: "" })
 
   useEffect(() => {
     custIdRef.current = getOrCreateCustomerId()
@@ -199,13 +202,40 @@ export default function IshiChatWidget() {
       // Handle ticket actions
       if (data?.action === "create_ticket") {
         const subject: string = data.ticketSubject || message.slice(0, 80)
+        // Enforce contact details before creating a complaint ticket
+        const needName = !customer?.name || !String(customer.name).trim()
+        const needPhone = !customer?.phone || !String(customer.phone).trim()
+        if (needName || needPhone) {
+          setAwaitingContact(true)
+          setPendingTicketSubject(subject)
+          setMessages((m) => [
+            ...m,
+            { role: "assistant" as const, content: "Complaint register karne ke liye kripya apna naam aur phone number dein (email optional)." },
+          ])
+          return
+        }
         const newRef = await push(ref(database, "tickets"), {
           subject,
           status: "open",
           customerId: custIdRef.current,
           createdAt: Date.now(),
+          customerName: customer?.name || null,
+          customerPhone: customer?.phone || null,
+          customerEmail: customer?.email || null,
         })
-        setTickets((t) => [{ id: newRef.key!, subject, status: "open", customerId: custIdRef.current, createdAt: Date.now() }, ...t])
+        setTickets((t) => [
+          {
+            id: newRef.key!,
+            subject,
+            status: "open",
+            customerId: custIdRef.current,
+            createdAt: Date.now(),
+            customerName: customer?.name || null,
+            customerPhone: customer?.phone || null,
+            customerEmail: customer?.email || null,
+          },
+          ...t,
+        ])
         setMessages((m) => [
           ...m,
           { role: "assistant", content: `Ticket ban gaya hai. Ticket ID: ${newRef.key}. Hum jald hi aapko update denge.` },
@@ -269,6 +299,67 @@ export default function IshiChatWidget() {
       console.error("Ishi: failed to persist user message", e)
     }
     await handleLLM(text, nextMsgs)
+  }
+
+  async function submitContactAndCreateTicket() {
+    try {
+      const name = contactDraft.name.trim()
+      const phone = contactDraft.phone.trim()
+      const email = contactDraft.email.trim()
+      if (!name || !phone) {
+        setMessages((m) => [
+          ...m,
+          { role: "assistant" as const, content: "Naam aur phone jaroori hain. Kripya dono provide karein." },
+        ])
+        return
+      }
+      setLoading(true)
+      // Persist customer details
+      await update(ref(database, `customers/${custIdRef.current}`), { name, phone, email: email || null })
+      setCustomer((c) => ({ ...c, name, phone, ...(email ? { email } : {}) }))
+      await update(ref(database, `chats/${custIdRef.current}/meta`), {
+        customerId: custIdRef.current,
+        name,
+        phone,
+        email: email || null,
+      })
+
+      // Create the pending ticket if any
+      const subject = pendingTicketSubject || "Customer Complaint"
+      const newRef = await push(ref(database, "tickets"), {
+        subject,
+        status: "open",
+        customerId: custIdRef.current,
+        createdAt: Date.now(),
+        customerName: name,
+        customerPhone: phone,
+        customerEmail: email || null,
+      })
+      setTickets((t) => [
+        { id: newRef.key!, subject, status: "open", customerId: custIdRef.current, createdAt: Date.now(), customerName: name, customerPhone: phone, customerEmail: email || null },
+        ...t,
+      ])
+      setMessages((m) => [
+        ...m,
+        { role: "assistant" as const, content: `Dhanyavaad! Aapka complaint register ho gaya. Ticket ID: ${newRef.key}. Hum jald hi aapko update denge.` },
+      ])
+    } catch (e) {
+      console.error("Ishi: contact submit failed", e)
+      setMessages((m) => [
+        ...m,
+        { role: "assistant" as const, content: "Maaf kijiye, contact details save karte samay samasya hui. Kripya dobara koshish karein." },
+      ])
+    } finally {
+      setAwaitingContact(false)
+      setPendingTicketSubject(null)
+      setContactDraft({ name: "", phone: "", email: "" })
+      setLoading(false)
+    }
+  }
+
+  function cancelAwaitingContact() {
+    setAwaitingContact(false)
+    setPendingTicketSubject(null)
   }
 
   return (
@@ -335,22 +426,64 @@ export default function IshiChatWidget() {
 
           {/* Input */}
           <div className="p-2 border-t bg-white">
+            {awaitingContact && (
+              <div className="mb-2 p-2 border rounded-md bg-orange-50">
+                <div className="text-xs font-medium text-orange-800 mb-2">Complaint ke liye contact details zaroori hain</div>
+                <div className="flex flex-col gap-2">
+                  <input
+                    value={contactDraft.name}
+                    onChange={(e) => setContactDraft((d) => ({ ...d, name: e.target.value }))}
+                    placeholder="Name (required)"
+                    className="text-sm border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                  <input
+                    value={contactDraft.phone}
+                    onChange={(e) => setContactDraft((d) => ({ ...d, phone: e.target.value }))}
+                    placeholder="Phone (required)"
+                    className="text-sm border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                  <input
+                    value={contactDraft.email}
+                    onChange={(e) => setContactDraft((d) => ({ ...d, email: e.target.value }))}
+                    placeholder="Email (optional)"
+                    className="text-sm border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={submitContactAndCreateTicket}
+                      disabled={loading}
+                      className="h-9 px-3 inline-flex items-center justify-center rounded-md bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-60"
+                    >
+                      Save & Create Ticket
+                    </button>
+                    <button
+                      onClick={cancelAwaitingContact}
+                      className="h-9 px-3 inline-flex items-center justify-center rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
+                  if (awaitingContact) return
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault()
                     onSend()
                   }
                 }}
+                disabled={loading || awaitingContact}
                 placeholder="Ask about products, prices, support…"
-                className="flex-1 text-sm border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="flex-1 text-sm border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:bg-gray-100 disabled:text-gray-400"
               />
               <button
                 onClick={onSend}
-                disabled={loading}
+                disabled={loading || awaitingContact}
                 className="h-9 w-9 inline-flex items-center justify-center rounded-md bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-60"
                 aria-label="Send"
               >
