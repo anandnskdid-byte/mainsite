@@ -61,9 +61,7 @@ async function fetchTickets(): Promise<any[]> {
 export default function IshiChatWidget() {
   const [open, setOpen] = useState(false)
   const [input, setInput] = useState("")
-  const [messages, setMessages] = useState<ChatMsg[]>([
-    { role: "assistant", content: "Namaste! Main Ishi hoon – Shri Karni Home Solutions ki sales & support assistant. Aap products, prices, availability, shipping aur support ke baare mein poochh sakte hain." },
-  ])
+  const [messages, setMessages] = useState<ChatMsg[]>([])
   const [loading, setLoading] = useState(false)
   const [products, setProducts] = useState<LiteProduct[]>([])
   const [tickets, setTickets] = useState<any[]>([])
@@ -74,11 +72,49 @@ export default function IshiChatWidget() {
   useEffect(() => {
     custIdRef.current = getOrCreateCustomerId()
     ;(async () => {
-      const [p, t] = await Promise.all([fetchProducts(), fetchTickets()])
+      const [p, t, custSnap, chatSnap] = await Promise.all([
+        fetchProducts(),
+        fetchTickets(),
+        get(ref(database, `customers/${custIdRef.current}`)).catch(() => null as any),
+        get(ref(database, `chats/${custIdRef.current}/messages`)).catch(() => null as any),
+      ])
       setProducts(p)
       // Only keep tickets for this customer if customerId field present
       const myTickets = t.filter((tk) => !tk.customerId || tk.customerId === custIdRef.current)
       setTickets(myTickets)
+
+      // Load existing customer profile if present
+      const custVal = custSnap ? (custSnap as any).val() : null
+      if (custVal && typeof custVal === "object") {
+        setCustomer({
+          name: (custVal.name || "").toString() || undefined,
+          email: (custVal.email || "").toString() || undefined,
+          phone: (custVal.phone || "").toString() || undefined,
+        })
+      }
+
+      // Load chat history for continuity
+      const chatVal = chatSnap ? (chatSnap as any).val() : null
+      if (chatVal && typeof chatVal === "object") {
+        const arr = Object.values(chatVal as Record<string, any>)
+          .map((m: any) => ({
+            role: m?.role === "assistant" ? "assistant" : "user",
+            content: (m?.content || "").toString(),
+            createdAt: Number(m?.createdAt || 0),
+          }))
+          .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
+        if (arr.length > 0) {
+          setMessages(arr.map(({ role, content }) => ({ role: role as "user" | "assistant", content })))
+        } else {
+          setMessages([
+            { role: "assistant", content: "Namaste! Main Ishi hoon – Shri Karni Home Solutions ki sales & support assistant. Aap products, prices, availability, shipping aur support ke baare mein poochh sakte hain." },
+          ])
+        }
+      } else {
+        setMessages([
+          { role: "assistant", content: "Namaste! Main Ishi hoon – Shri Karni Home Solutions ki sales & support assistant. Aap products, prices, availability, shipping aur support ke baare mein poochh sakte hain." },
+        ])
+      }
     })()
   }, [])
 
@@ -89,7 +125,7 @@ export default function IshiChatWidget() {
 
   const visibleTickets = useMemo(() => tickets.slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).slice(0, 5), [tickets])
 
-  async function handleLLM(message: string) {
+  async function handleLLM(message: string, historyOverride?: ChatMsg[]) {
     setLoading(true)
     try {
       const res = await fetch("/api/ishi-chat", {
@@ -97,7 +133,7 @@ export default function IshiChatWidget() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message,
-          history: messages,
+          history: historyOverride ?? messages,
           context: {
             products,
             customer: { id: custIdRef.current, ...customer },
@@ -105,11 +141,41 @@ export default function IshiChatWidget() {
           },
         }),
       })
+      if (!res.ok) {
+        throw new Error(`Ishi API error: ${res.status}`)
+      }
       const data = await res.json()
 
       // Append assistant reply
       if (data?.reply) {
-        setMessages((m) => [...m, { role: "assistant", content: String(data.reply) }])
+        let replyText = String(data.reply).trim()
+        // Soft-guard to avoid repeated greeting when conversation already ongoing
+        const recentAssistantExists = messages.slice(-4).some((m) => m.role === "assistant")
+        if (recentAssistantExists) {
+          replyText = replyText.replace(/^namaste!?[,\.\s-]*/i, "").trim()
+        }
+        setMessages((m) => [...m, { role: "assistant" as const, content: replyText }])
+
+        // Persist assistant message and update chat meta
+        try {
+          const now = Date.now()
+          await push(ref(database, `chats/${custIdRef.current}/messages`), {
+            role: "assistant",
+            content: replyText,
+            createdAt: now,
+          })
+          await update(ref(database, `chats/${custIdRef.current}/meta`), {
+            customerId: custIdRef.current,
+            name: customer?.name || null,
+            email: customer?.email || null,
+            phone: customer?.phone || null,
+            lastMessageAt: now,
+            lastMessageRole: "assistant",
+            lastMessageText: replyText.slice(0, 1000),
+          })
+        } catch (e) {
+          console.error("Ishi: failed to persist assistant message", e)
+        }
       }
 
       // Persist any customer updates
@@ -121,6 +187,12 @@ export default function IshiChatWidget() {
         if (Object.keys(upd).length) {
           await update(ref(database, `customers/${custIdRef.current}`), upd)
           setCustomer((c) => ({ ...c, ...upd }))
+          // Mirror updates to chat meta
+          await update(ref(database, `chats/${custIdRef.current}/meta`), {
+            ...(upd.name ? { name: upd.name } : {}),
+            ...(upd.email ? { email: upd.email } : {}),
+            ...(upd.phone ? { phone: upd.phone } : {}),
+          })
         }
       }
 
@@ -173,9 +245,30 @@ export default function IshiChatWidget() {
   async function onSend() {
     const text = input.trim()
     if (!text) return
-    setMessages((m) => [...m, { role: "user", content: text }])
+    const nextMsgs: ChatMsg[] = [...messages, { role: "user" as const, content: text }]
+    setMessages(nextMsgs)
     setInput("")
-    await handleLLM(text)
+    // Persist user message immediately for history continuity
+    try {
+      const now = Date.now()
+      await push(ref(database, `chats/${custIdRef.current}/messages`), {
+        role: "user",
+        content: text,
+        createdAt: now,
+      })
+      await update(ref(database, `chats/${custIdRef.current}/meta`), {
+        customerId: custIdRef.current,
+        name: customer?.name || null,
+        email: customer?.email || null,
+        phone: customer?.phone || null,
+        lastMessageAt: now,
+        lastMessageRole: "user",
+        lastMessageText: text.slice(0, 1000),
+      })
+    } catch (e) {
+      console.error("Ishi: failed to persist user message", e)
+    }
+    await handleLLM(text, nextMsgs)
   }
 
   return (
