@@ -94,7 +94,15 @@ function extractJsonFromText(text: string): any | null {
 export async function POST(req: NextRequest) {
   try {
     if (!API_KEY) {
-      return NextResponse.json({ error: 'Server missing GOOGLE_GEMINI_API_KEY' }, { status: 500 })
+      console.error('Ishi API error: missing GOOGLE_GEMINI_API_KEY')
+      // Degrade gracefully so UI continues working
+      return NextResponse.json({
+        reply: 'Maaf kijiye, AI assistant abhi upalabdh nahi hai (config missing). Kripya kuch der baad dobara koshish karein.',
+        action: 'none',
+        ticketSubject: null,
+        ticketId: null,
+        customerUpdate: { name: null, email: null, phone: null },
+      })
     }
 
     const body = await req.json()
@@ -180,7 +188,14 @@ Products (top 20):\n${productLines || '- none'}
     if (!resp.ok) {
       const errText = await resp.text()
       console.error('Gemini REST error:', resp.status, errText)
-      return NextResponse.json({ error: 'Gemini API error' }, { status: 500 })
+      // Degrade gracefully so UI continues working
+      return NextResponse.json({
+        reply: 'Maaf kijiye, AI se jawaab laane mein samasya hui. Kripya thodi der baad dubara koshish karein.',
+        action: 'none',
+        ticketSubject: null,
+        ticketId: null,
+        customerUpdate: { name: null, email: null, phone: null },
+      })
     }
     const apiData: any = await resp.json()
     const text = ((apiData?.candidates?.[0]?.content?.parts as any[]) || [])
