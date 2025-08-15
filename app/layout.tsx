@@ -4,6 +4,7 @@ import './globals.css'
 import { Navbar } from '@/components/layout/navbar'
 import { CartProvider } from '@/contexts/cart-context'
 import SitePopup from '@/components/ui/site-popup'
+import IshiChatWidget from '@/components/ishi/ishi-chat-widget'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -25,6 +26,7 @@ export default function RootLayout({
           <Navbar />
           {children}
           <SitePopup />
+          <IshiChatWidget />
         </CartProvider>
       </body>
     </html>
