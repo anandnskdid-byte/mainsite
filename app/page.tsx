@@ -160,9 +160,15 @@ const HomePage = () => {
       // Filter by category
       if (selectedCategory && selectedCategory !== 'all') {
         filtered = filtered.filter(product => {
-          const productCategory = product?.category || ''
-          const selectedCat = selectedCategory || ''
-          return productCategory.toLowerCase() === selectedCat.toLowerCase()
+          const productCategory = (product?.category || '').toLowerCase()
+          const selectedCat = (selectedCategory || '').toLowerCase()
+          
+          // Handle wall panel variations
+          if (selectedCat.includes('wall panel')) {
+            return productCategory.includes('wall panel')
+          }
+          
+          return productCategory === selectedCat
         })
       }
 
@@ -524,7 +530,7 @@ const HomePage = () => {
 
           {(() => {
             const wallPanelProducts = products.filter(
-              (p) => (p.category || '').toLowerCase() === 'wall panels'
+              (p) => (p.category || '').toLowerCase().includes('wall panel')
             )
             
             if (wallPanelProducts.length === 0) {
@@ -642,7 +648,7 @@ const HomePage = () => {
 
           {(() => {
             const wallPanelProducts = products.filter(
-              (p) => (p.category || '').toLowerCase() === 'wall panels'
+              (p) => (p.category || '').toLowerCase().includes('wall panel')
             )
             
             if (wallPanelProducts.length > 12) {
@@ -802,7 +808,7 @@ const HomePage = () => {
 
           {(() => {
             const wallPanelProducts = products.filter(
-              (p) => (p.category || '').toLowerCase() === 'wall panels'
+              (p) => (p.category || '').toLowerCase().includes('wall panel')
             )
             
             if (wallPanelProducts.length === 0) {
@@ -920,7 +926,7 @@ const HomePage = () => {
 
           {(() => {
             const wallPanelProducts = products.filter(
-              (p) => (p.category || '').toLowerCase() === 'wall panels'
+              (p) => (p.category || '').toLowerCase().includes('wall panel')
             )
             
             if (wallPanelProducts.length > 12) {
