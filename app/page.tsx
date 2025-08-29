@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense, useMemo } from 'react'
+import { WallPanelsLoading } from '@/components/loading/wall-panels-loading'
 import { database } from '@/lib/firebase'
 import { ref, onValue } from 'firebase/database'
 import type { Product, Category } from '@/types'
@@ -40,6 +41,7 @@ const HomePage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showWallPanelsLoading, setShowWallPanelsLoading] = useState(false)
   
 
   // Randomly group products: 4 cards x 4 products each (up to 16 total)
@@ -219,8 +221,17 @@ const HomePage = () => {
     )
   }
 
+  const handleWallPanelsLoadingComplete = (productId: string) => {
+    setShowWallPanelsLoading(false)
+    window.location.href = `/products/${productId}`
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {showWallPanelsLoading && (
+        <WallPanelsLoading onComplete={() => handleWallPanelsLoadingComplete('')} />
+      )}
+      
       <Suspense fallback={null}>
         <CategoryQueryReader onCategory={(c) => setSelectedCategory(c)} />
       </Suspense>
@@ -494,9 +505,9 @@ const HomePage = () => {
           )}
         </div>
 
-        {/* Enhanced Why Choose Us Section with Wall Banner - Mobile Optimized */}
+        {/* Wall Panels Banner Section */}
         {products.length > 0 && (
-          <div className="bg-gradient-to-br from-orange-50 via-white to-orange-50 rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-8 shadow-lg border border-orange-100">
+          <div className="bg-gradient-to-br from-orange-50 via-white to-orange-50 rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-8 shadow-lg border border-orange-100 mb-8">
             {/* Wall Panels Banner */}
             <div className="mb-6 md:mb-8 group cursor-pointer overflow-hidden rounded-lg md:rounded-xl">
               <img
@@ -505,7 +516,157 @@ const HomePage = () => {
                 className="w-full h-auto rounded-lg md:rounded-xl shadow-lg transition-all duration-700 ease-in-out transform group-hover:scale-105 group-hover:shadow-2xl filter grayscale group-hover:grayscale-0"
               />
             </div>
+          </div>
+        )}
+
+        {/* Wall Panels Products Section */}
+        <div className="mb-8">
+
+          {(() => {
+            const wallPanelProducts = products.filter(
+              (p) => (p.category || '').toLowerCase() === 'wall panels'
+            )
             
+            if (wallPanelProducts.length === 0) {
+              return (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-gray-100 rounded-lg mx-auto mb-4 flex items-center justify-center">
+                    <Package className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Wall Panels Coming Soon</h3>
+                  <p className="text-gray-600">We're adding new wall panel products to our collection</p>
+                </div>
+              )
+            }
+
+            return (
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+                {wallPanelProducts.slice(0, 12).map((product) => (
+                  <div key={product.id} className="group relative">
+                    {/* Luxury Card Container */}
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white via-gray-50 to-white shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 border border-gray-100">
+                      {/* Premium Badge */}
+                      <div className="absolute top-3 left-3 z-10">
+                        <div className="bg-gradient-to-r from-amber-400 to-amber-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                          PREMIUM
+                        </div>
+                      </div>
+                      
+                      {/* Image Container with Luxury Effects */}
+                      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
+                        {/* Decorative Background Pattern */}
+                        <div className="absolute inset-0 opacity-10">
+                          <div className="absolute top-4 left-4 w-8 h-8 bg-amber-300 rounded-full blur-lg"></div>
+                          <div className="absolute bottom-4 right-4 w-6 h-6 bg-amber-400 rounded-full blur-md"></div>
+                          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-amber-200 rounded-full blur-xl"></div>
+                        </div>
+                        
+                        {/* Product Image */}
+                        <img
+                          src={Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : product.imageUrl || '/placeholder.svg'}
+                          alt={product.name}
+                          className="relative z-10 w-full h-full object-contain transition-all duration-700 group-hover:scale-110 filter group-hover:brightness-110 p-2"
+                        />
+                        
+                        {/* Luxury Overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        
+                        {/* Floating Action Button */}
+                        <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                          <div className="w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110">
+                            <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Luxury Content Section */}
+                      <div className="p-4 bg-gradient-to-br from-white to-gray-50">
+                        {/* Product Name */}
+                        <h3 className="font-bold text-gray-900 text-sm mb-2 line-clamp-2 group-hover:text-amber-700 transition-colors duration-300">
+                          {product.name}
+                        </h3>
+                        
+                        {/* Price with Luxury Styling */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center">
+                            <span className="text-lg font-bold bg-gradient-to-r from-amber-600 to-amber-700 bg-clip-text text-transparent">
+                              ₹{product.price?.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center text-amber-500">
+                            {[...Array(5)].map((_, i) => (
+                              <svg key={i} className="w-3 h-3 fill-current" viewBox="0 0 20 20">
+                                <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                              </svg>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {/* Luxury Features */}
+                        <div className="flex items-center justify-between text-xs text-gray-600 mb-3">
+                          <span className="flex items-center">
+                            <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+                            In Stock
+                          </span>
+                          <span className="bg-amber-100 text-amber-800 px-2 py-1 rounded-full font-medium">
+                            Premium Quality
+                          </span>
+                        </div>
+                        
+                        {/* Luxury CTA Button */}
+                        <button 
+                          onClick={() => {
+                            setShowWallPanelsLoading(true)
+                            setTimeout(() => {
+                              setShowWallPanelsLoading(false)
+                              window.location.href = `/products/${product.id}`
+                            }, 3000)
+                          }}
+                          className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold py-2.5 px-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl text-sm"
+                        >
+                          View Details
+                        </button>
+                      </div>
+                      
+                      {/* Luxury Border Glow */}
+                      <div className="absolute inset-0 rounded-2xl border-2 border-transparent bg-gradient-to-r from-amber-400/20 via-transparent to-amber-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          })()}
+
+          {(() => {
+            const wallPanelProducts = products.filter(
+              (p) => (p.category || '').toLowerCase() === 'wall panels'
+            )
+            
+            if (wallPanelProducts.length > 12) {
+              return (
+                <div className="text-center mt-6">
+                  <Link href="/categories?category=wall panels">
+                    <Button 
+                      size="lg" 
+                      className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
+                      View All Wall Panels
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </Link>
+                </div>
+              )
+            }
+            return null
+          })()}
+        </div>
+
+        {/* Enhanced Why Choose Us Section - Mobile Optimized */}
+        {products.length > 0 && (
+          <div className="bg-gradient-to-br from-orange-50 via-white to-orange-50 rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-8 shadow-lg border border-orange-100">
             <div className="text-center mb-6 md:mb-8">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 md:mb-4">
                 Why Choose <span className="text-orange-600">Shri Karni</span>?
@@ -638,20 +799,10 @@ const HomePage = () => {
 
         {/* Wall Panels Products Section */}
         <div className="mb-8">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 md:mb-4">
-              Our <span className="text-orange-600">Wall Panels</span> Collection
-            </h2>
-            <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl mx-auto px-2">
-              Transform your spaces with our premium wall panel solutions
-            </p>
-          </div>
 
           {(() => {
             const wallPanelProducts = products.filter(
-              (p) => (p.category || '').toLowerCase().includes('wall') || 
-                     (p.name || '').toLowerCase().includes('wall panel') ||
-                     (p.description || '').toLowerCase().includes('wall panel')
+              (p) => (p.category || '').toLowerCase() === 'wall panels'
             )
             
             if (wallPanelProducts.length === 0) {
@@ -667,9 +818,101 @@ const HomePage = () => {
             }
 
             return (
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
                 {wallPanelProducts.slice(0, 12).map((product) => (
-                  <ProductCard key={product.id} product={product} compact square />
+                  <div key={product.id} className="group relative">
+                    {/* Luxury Card Container */}
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white via-gray-50 to-white shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 border border-gray-100">
+                      {/* Premium Badge */}
+                      <div className="absolute top-3 left-3 z-10">
+                        <div className="bg-gradient-to-r from-amber-400 to-amber-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                          PREMIUM
+                        </div>
+                      </div>
+                      
+                      {/* Image Container with Luxury Effects */}
+                      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
+                        {/* Decorative Background Pattern */}
+                        <div className="absolute inset-0 opacity-10">
+                          <div className="absolute top-4 left-4 w-8 h-8 bg-amber-300 rounded-full blur-lg"></div>
+                          <div className="absolute bottom-4 right-4 w-6 h-6 bg-amber-400 rounded-full blur-md"></div>
+                          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-amber-200 rounded-full blur-xl"></div>
+                        </div>
+                        
+                        {/* Product Image */}
+                        <img
+                          src={Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : product.imageUrl || '/placeholder.svg'}
+                          alt={product.name}
+                          className="relative z-10 w-full h-full object-contain transition-all duration-700 group-hover:scale-110 filter group-hover:brightness-110 p-2"
+                        />
+                        
+                        {/* Luxury Overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        
+                        {/* Floating Action Button */}
+                        <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                          <div className="w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110">
+                            <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Luxury Content Section */}
+                      <div className="p-4 bg-gradient-to-br from-white to-gray-50">
+                        {/* Product Name */}
+                        <h3 className="font-bold text-gray-900 text-sm mb-2 line-clamp-2 group-hover:text-amber-700 transition-colors duration-300">
+                          {product.name}
+                        </h3>
+                        
+                        {/* Price with Luxury Styling */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center">
+                            <span className="text-lg font-bold bg-gradient-to-r from-amber-600 to-amber-700 bg-clip-text text-transparent">
+                              ₹{product.price?.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center text-amber-500">
+                            {[...Array(5)].map((_, i) => (
+                              <svg key={i} className="w-3 h-3 fill-current" viewBox="0 0 20 20">
+                                <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                              </svg>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {/* Luxury Features */}
+                        <div className="flex items-center justify-between text-xs text-gray-600 mb-3">
+                          <span className="flex items-center">
+                            <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+                            In Stock
+                          </span>
+                          <span className="bg-amber-100 text-amber-800 px-2 py-1 rounded-full font-medium">
+                            Premium Quality
+                          </span>
+                        </div>
+                        
+                        {/* Luxury CTA Button */}
+                        <button 
+                          onClick={() => {
+                            setShowWallPanelsLoading(true)
+                            setTimeout(() => {
+                              setShowWallPanelsLoading(false)
+                              window.location.href = `/products/${product.id}`
+                            }, 3000)
+                          }}
+                          className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold py-2.5 px-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl text-sm"
+                        >
+                          View Details
+                        </button>
+                      </div>
+                      
+                      {/* Luxury Border Glow */}
+                      <div className="absolute inset-0 rounded-2xl border-2 border-transparent bg-gradient-to-r from-amber-400/20 via-transparent to-amber-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                    </div>
+                  </div>
                 ))}
               </div>
             )
@@ -677,9 +920,7 @@ const HomePage = () => {
 
           {(() => {
             const wallPanelProducts = products.filter(
-              (p) => (p.category || '').toLowerCase().includes('wall') || 
-                     (p.name || '').toLowerCase().includes('wall panel') ||
-                     (p.description || '').toLowerCase().includes('wall panel')
+              (p) => (p.category || '').toLowerCase() === 'wall panels'
             )
             
             if (wallPanelProducts.length > 12) {
