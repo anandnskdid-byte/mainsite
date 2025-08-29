@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -17,6 +17,7 @@ import { ref, onValue, get } from 'firebase/database'
 export function Navbar() {
   const { user, userData, loading } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
   const { state } = useCart()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
@@ -111,6 +112,11 @@ export function Navbar() {
     if (q) {
       router.push(`/search?q=${encodeURIComponent(q)}`)
     }
+  }
+
+  // Hide navbar completely on invoice pages
+  if (pathname?.startsWith('/invoices')) {
+    return null
   }
 
   return (

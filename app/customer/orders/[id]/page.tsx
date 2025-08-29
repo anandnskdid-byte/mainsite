@@ -10,32 +10,18 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Package, Calendar, MapPin, CreditCard, Truck, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
-
-interface Order {
-  id: string
-  products: Array<{
-    productId: string
-    name: string
-    price: number
-    quantity: number
-  }>
-  totalAmount: number
-  status: string
-  createdAt: number
-  address: string
-  paymentMethod: string
-  phone: string
-  customerName: string
-}
+import { DownloadInvoiceButton } from '@/components/invoices/DownloadInvoiceButton'
+import { Order } from '@/types/order'
 
 export default function OrderDetailsPage() {
-  const { user, userData, loading, initialized } = useAuth()
+  const { user, userData, loading: authLoading, initialized } = useAuth()
   const router = useRouter()
   const params = useParams()
   const [order, setOrder] = useState<Order | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    if (initialized && !loading && params.id) {
+    if (initialized && !authLoading && params.id) {
       if (!user || !userData || userData.role !== 'customer') {
         router.push('/auth/login')
         return
@@ -47,18 +33,38 @@ export default function OrderDetailsPage() {
         if (data && data.customerId === user.uid) {
           setOrder({ id: params.id as string, ...data })
         } else {
-          router.push('/customer/orders')
+          setOrder(null)
         }
+        setIsLoading(false)
+      }, (error) => {
+        console.error('Error fetching order:', error)
+        setIsLoading(false)
       })
 
       return () => unsubscribe()
     }
-  }, [user, userData, loading, initialized, router, params.id])
+  }, [user, userData, authLoading, initialized, router, params.id])
 
-  if (loading || !initialized || !order) {
+  if (authLoading || !initialized || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-600"></div>
+      </div>
+    )
+  }
+
+  if (!order) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <Package className="h-16 w-16 text-gray-400 mb-4" />
+        <h2 className="text-2xl font-semibold text-gray-800">Order not found</h2>
+        <p className="text-gray-500 mt-2">The order you're looking for doesn't exist or you don't have permission to view it.</p>
+        <Link href="/customer/orders" className="mt-6">
+          <Button>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Orders
+          </Button>
+        </Link>
       </div>
     )
   }
@@ -104,7 +110,7 @@ export default function OrderDetailsPage() {
         </div>
 
         <div className="mb-8">
-          <div className="flex justify-between items-start">
+          <div className="flex justify-between items-start mb-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Order #{order.id.slice(-8)}</h1>
               <p className="text-gray-600 flex items-center mt-1">
@@ -116,72 +122,82 @@ export default function OrderDetailsPage() {
                 })}
               </p>
             </div>
-            <Badge className={getStatusColor(order.status)}>
-              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-            </Badge>
+            <div className="flex items-center space-x-2">
+              <DownloadInvoiceButton order={order} />
+              <Badge className={getStatusColor(order.status)}>
+                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+              </Badge>
+            </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Order Details */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Order Status Timeline */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Order Status</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {getStatusSteps(order.status).map((step, index) => {
-                    const Icon = step.icon
-                    return (
-                      <div key={step.key} className="flex items-center space-x-3">
-                        <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                          step.completed || step.current ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
-                        }`}>
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <div className="flex-1">
-                          <p className={`font-medium ${
-                            step.completed || step.current ? 'text-green-600' : 'text-gray-400'
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Order Details */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Order Status Timeline */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Order Status</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {getStatusSteps(order.status).map((step) => {
+                      const Icon = step.icon
+                      const isCurrent = step.current
+                      const isCompleted = step.completed
+                      
+                      return (
+                        <div key={step.key} className="flex items-center space-x-3">
+                          <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                            isCompleted || isCurrent ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
                           }`}>
-                            {step.label}
-                          </p>
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <div className="flex-1">
+                            <p className={`text-sm font-medium ${
+                              isCompleted || isCurrent ? 'text-gray-900' : 'text-gray-500'
+                            }`}>
+                              {step.label}
+                            </p>
+                            {isCurrent && (
+                              <p className="text-xs text-gray-500">
+                              {order.status === 'shipped' ? 'Your order is on the way' : 
+                               order.status === 'delivered' ? `Delivered on ${new Date(order.createdAt).toLocaleDateString()}` :
+                               'Processing your order'}
+                            </p>
+                            )}
+                          </div>
                         </div>
-                        {step.completed && (
-                          <CheckCircle className="h-5 w-5 text-green-600" />
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Order Items */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Order Items</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {order.products.map((product, index) => (
-                    <div key={index} className="flex justify-between items-center py-3 border-b last:border-b-0">
-                      <div>
-                        <p className="font-medium">{product.name}</p>
-                        <p className="text-sm text-gray-600">Quantity: {product.quantity}</p>
-                        <p className="text-sm text-gray-600">Price: ₹{product.price.toLocaleString()}</p>
-                      </div>
-                      <p className="font-medium">₹{(product.price * product.quantity).toLocaleString()}</p>
-                    </div>
-                  ))}
-                  <div className="flex justify-between items-center pt-3 border-t font-semibold text-lg">
-                    <span>Total Amount</span>
-                    <span>₹{order.totalAmount.toLocaleString()}</span>
+                      )
+                    })}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+
+              {/* Order Items */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Order Items</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {order.products.map((product, index) => (
+                      <div key={index} className="flex justify-between items-center py-3 border-b last:border-b-0">
+                        <div>
+                          <p className="font-medium">{product.name}</p>
+                          <p className="text-sm text-gray-600">Quantity: {product.quantity}</p>
+                          <p className="text-sm text-gray-600">Price: ₹{product.price.toLocaleString()}</p>
+                        </div>
+                        <p className="font-medium">₹{(product.price * product.quantity).toLocaleString()}</p>
+                      </div>
+                    ))}
+                    <div className="flex justify-between items-center pt-3 border-t font-semibold text-lg">
+                      <span>Total Amount</span>
+                      <span>₹{order.totalAmount.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
           {/* Order Summary */}

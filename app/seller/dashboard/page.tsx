@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useAuth } from '@/hooks/use-auth'
 import { useRouter } from 'next/navigation'
 import { database } from '@/lib/firebase'
@@ -16,9 +17,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ProductCard } from '@/components/products/product-card'
-import { Plus, Package, ShoppingCart, TrendingUp, Sparkles, Loader2, Palette, FolderPlus, ListOrdered, X } from 'lucide-react'
+import { Plus, Package, ShoppingCart, TrendingUp, Sparkles, Loader2, Palette, FolderPlus, ListOrdered, X, Download } from 'lucide-react'
 import { enhanceProductDescription } from '@/lib/gemini'
-import type { Product, Category, Order } from '@/types'
+// Invoice will open in a dedicated HTML page for printing; no PDFDownloadLink used
+import type { Product, Category } from '@/types'
+import type { Order } from '@/types/order'
 
 // Using shared types from @/types
 
@@ -674,8 +677,21 @@ export default function SellerDashboard() {
                               {new Date(order.createdAt).toLocaleDateString()}
                             </p>
                           </div>
-                          <div className="text-right">
+                          <div className="flex flex-col items-end gap-2">
                             <p className="font-medium">₹{order.totalAmount.toLocaleString()}</p>
+                            <div className="relative">
+                              <Link href={`/invoices/${order.id}`} target="_blank" rel="noopener noreferrer">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  className="flex items-center gap-1 text-xs min-w-[80px] justify-center"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Download className="h-3 w-3 mr-1" />
+                                  <span>Invoice</span>
+                                </Button>
+                              </Link>
+                            </div>
                             <Select
                               value={order.status}
                               onValueChange={(value) => handleUpdateOrderStatus(order.id, value)}
@@ -713,7 +729,7 @@ export default function SellerDashboard() {
                             <div className="text-sm text-gray-600">
                               <p>📍 {order.address}</p>
                               <p>📞 {order.phone}</p>
-                            </div>
+-                            </div>
                           </div>
                         </div>
                       </div>

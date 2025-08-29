@@ -11,7 +11,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { ProductCard } from '@/components/products/product-card'
-import { Search, Filter, Package, ShoppingBag, Users, Star, ArrowRight, Truck, ShieldCheck } from 'lucide-react'
+import { PremiumHero } from '@/components/hero/premium-hero'
+import { Search, Filter, Package, ShoppingBag, Users, Star, ArrowRight, Truck, ShieldCheck, Award, Clock, HeartHandshake, Zap, CheckCircle, Phone } from 'lucide-react'
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel'
 
 // Using shared types from @/types
@@ -223,179 +224,12 @@ const HomePage = () => {
       <Suspense fallback={null}>
         <CategoryQueryReader onCategory={(c) => setSelectedCategory(c)} />
       </Suspense>
+      
+      {/* Premium Hero Section */}
+      <PremiumHero />
+
       <div className="space-y-8">
-        {/* Ultra Enhanced Hero Section */}
-        <div className="relative w-full overflow-hidden">
-          {/* Background with animated gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-50 via-white to-orange-100 animate-gradient-x"></div>
-          
-          {/* Floating particles animation */}
-          <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute top-20 left-10 w-4 h-4 bg-orange-300 rounded-full opacity-60 animate-float"></div>
-            <div className="absolute top-40 right-20 w-6 h-6 bg-blue-300 rounded-full opacity-40 animate-float-delayed"></div>
-            <div className="absolute bottom-32 left-20 w-3 h-3 bg-yellow-300 rounded-full opacity-50 animate-bounce"></div>
-            <div className="absolute top-1/3 right-1/4 w-5 h-5 bg-pink-300 rounded-full opacity-30 animate-pulse"></div>
-            <div className="absolute bottom-20 right-10 w-4 h-4 bg-green-300 rounded-full opacity-40 animate-float"></div>
-          </div>
-
-          <div className="relative min-h-[600px] md:min-h-[700px] flex items-center">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-                {/* Left Content */}
-                <div className="text-center lg:text-left space-y-8 animate-fade-in-up">
-                  {/* Badge */}
-                  <div className="inline-flex items-center px-4 py-2 bg-orange-100 text-orange-800 rounded-full text-sm font-medium animate-bounce-subtle">
-                    🏆 #1 Home Solutions Provider
-                  </div>
-
-                  <div className="space-y-6">
-                    <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold text-gray-900 leading-tight">
-                      <span className="bg-gradient-to-r from-orange-600 via-orange-500 to-red-500 bg-clip-text text-transparent animate-gradient-text">
-                        Shri Karni
-                      </span>
-                      <br />
-                      <span className="text-gray-800">Home Solutions</span>
-                    </h1>
-                    <p className="text-xl md:text-2xl text-gray-600 max-w-2xl leading-relaxed">
-                      Transform your home with our premium collection of furniture, decor, and essentials. 
-                      <span className="text-orange-600 font-semibold">Quality products at unbeatable prices.</span>
-                    </p>
-                  </div>
-                  
-                  {/* Enhanced CTA Buttons */}
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                    <Button 
-                      size="lg" 
-                      className="group px-10 py-5 text-xl bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-110 hover:-translate-y-1 rounded-full font-semibold"
-                    >
-                      Shop Now 
-                      <ArrowRight className="ml-3 h-6 w-6 group-hover:translate-x-1 transition-transform duration-300" />
-                    </Button>
-                    <Link href="/categories">
-                      <Button 
-                        size="lg" 
-                        variant="outline"
-                        className="group px-10 py-5 text-xl border-3 border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white transition-all duration-500 transform hover:scale-105 hover:-translate-y-1 rounded-full font-semibold shadow-lg hover:shadow-2xl"
-                      >
-                        Explore Categories
-                        <Package className="ml-3 h-6 w-6 group-hover:rotate-12 transition-transform duration-300" />
-                      </Button>
-                    </Link>
-                  </div>
-
-                  {/* Enhanced Trust Indicators */}
-                  <div className="flex flex-wrap justify-center lg:justify-start gap-8 pt-8">
-                    <div className="flex items-center gap-3 text-base text-gray-700 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105">
-                      <div className="p-2 bg-orange-100 rounded-full">
-                        <Truck className="h-6 w-6 text-orange-600" />
-                      </div>
-                      <span className="font-medium">Free Delivery</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-base text-gray-700 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105">
-                      <div className="p-2 bg-green-100 rounded-full">
-                        <ShieldCheck className="h-6 w-6 text-green-600" />
-                      </div>
-                      <span className="font-medium">Quality Assured</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-base text-gray-700 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105">
-                      <div className="p-2 bg-yellow-100 rounded-full">
-                        <Star className="h-6 w-6 text-yellow-600" />
-                      </div>
-                      <span className="font-medium">5000+ Happy Customers</span>
-                    </div>
-                  </div>
-
-                  {/* Customer Reviews Preview */}
-                  <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-orange-100 animate-fade-in-up-delayed">
-                    <div className="flex items-center gap-4 mb-3">
-                      <div className="flex">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
-                        ))}
-                      </div>
-                      <span className="text-sm text-gray-600">4.9/5 from 2,847 reviews</span>
-                    </div>
-                    <p className="text-gray-700 italic">
-                      "Amazing quality and fast delivery! My home looks completely transformed."
-                    </p>
-                    <p className="text-sm text-gray-500 mt-2">- Priya S., Mumbai</p>
-                  </div>
-                </div>
-
-                {/* Right Content - Hero Image/Carousel */}
-                <div className="relative">
-                  <div className="relative bg-white rounded-2xl shadow-2xl overflow-hidden">
-                    <Carousel className="w-full">
-                      <CarouselContent>
-                        <CarouselItem>
-                          <div className="relative w-full h-80 md:h-96 lg:h-[450px]">
-                            <img
-                              src="/banner.png"
-                              alt="Shri Karni Home Solutions - Premium Furniture"
-                              className="absolute inset-0 w-full h-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                          </div>
-                        </CarouselItem>
-                        {/* Add more carousel items if you have more images */}
-                        <CarouselItem>
-                          <div className="relative w-full h-80 md:h-96 lg:h-[450px] bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
-                            <div className="text-center space-y-4">
-                              <Package className="h-16 w-16 text-orange-600 mx-auto" />
-                              <h3 className="text-2xl font-bold text-gray-900">Premium Quality</h3>
-                              <p className="text-gray-600 max-w-sm">Handpicked products for your perfect home</p>
-                            </div>
-                          </div>
-                        </CarouselItem>
-                        <CarouselItem>
-                          <div className="relative w-full h-80 md:h-96 lg:h-[450px] bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                            <div className="text-center space-y-4">
-                              <ShoppingBag className="h-16 w-16 text-blue-600 mx-auto" />
-                              <h3 className="text-2xl font-bold text-gray-900">Easy Shopping</h3>
-                              <p className="text-gray-600 max-w-sm">Browse, select, and get delivered to your doorstep</p>
-                            </div>
-                          </div>
-                        </CarouselItem>
-                      </CarouselContent>
-                      <CarouselPrevious className="left-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white" />
-                      <CarouselNext className="right-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white" />
-                    </Carousel>
-                  </div>
-                  
-                  {/* Floating Stats */}
-                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-full max-w-sm">
-                    <div className="bg-white rounded-xl shadow-lg p-4 mx-4">
-                      <div className="grid grid-cols-3 gap-4 text-center">
-                        <div>
-                          <div className="text-2xl font-bold text-orange-600">1000+</div>
-                          <div className="text-xs text-gray-600">Products</div>
-                        </div>
-                        <div>
-                          <div className="text-2xl font-bold text-orange-600">5000+</div>
-                          <div className="text-xs text-gray-600">Customers</div>
-                        </div>
-                        <div>
-                          <div className="text-2xl font-bold text-orange-600">4.8★</div>
-                          <div className="text-xs text-gray-600">Rating</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Decorative Elements */}
-          <div className="absolute top-10 left-10 w-20 h-20 bg-orange-200 rounded-full opacity-50 animate-pulse"></div>
-          <div className="absolute bottom-10 right-10 w-16 h-16 bg-blue-200 rounded-full opacity-50 animate-pulse delay-1000"></div>
-          <div className="absolute top-1/2 left-5 w-8 h-8 bg-yellow-200 rounded-full opacity-30 animate-bounce delay-500"></div>
-        </div>
-
-        {/* Search Bar moved below cards */}
-      </div>
-
-      {/* Random Products Grid */}
+        {/* Random Products Grid */}
       <div className="relative mt-6 md:mt-10 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           {randomGroups.length > 0 && (
@@ -660,41 +494,213 @@ const HomePage = () => {
           )}
         </div>
 
-        {/* Featured Section */}
+        {/* Enhanced Why Choose Us Section with Wall Banner - Mobile Optimized */}
         {products.length > 0 && (
-          <div className="bg-white rounded-lg p-8 shadow-sm">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Why Choose Us?</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Package className="h-8 w-8 text-orange-600" />
+          <div className="bg-gradient-to-br from-orange-50 via-white to-orange-50 rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-8 shadow-lg border border-orange-100">
+            {/* Wall Panels Banner */}
+            <div className="mb-6 md:mb-8 group cursor-pointer overflow-hidden rounded-lg md:rounded-xl">
+              <img
+                src="/wall.png"
+                alt="Great Range of Wall Panels - Shree Karni Home Solutions"
+                className="w-full h-auto rounded-lg md:rounded-xl shadow-lg transition-all duration-700 ease-in-out transform group-hover:scale-105 group-hover:shadow-2xl filter grayscale group-hover:grayscale-0"
+              />
+            </div>
+            
+            <div className="text-center mb-6 md:mb-8">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 md:mb-4">
+                Why Choose <span className="text-orange-600">Shri Karni</span>?
+              </h2>
+              <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl mx-auto px-2">
+                Your trusted partner for premium construction materials
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-6 md:mb-8">
+              {/* Quality Products */}
+              <div className="group text-center p-3 sm:p-4 md:p-5 rounded-lg md:rounded-xl bg-white shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-gray-100">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-105 transition-transform duration-300">
+                  <Award className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-white" />
                 </div>
-                <h3 className="font-semibold mb-2">Quality Products</h3>
-                <p className="text-gray-600 text-sm">
-                  We source only the best materials from trusted manufacturers
+                <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-2">Premium Quality</h3>
+                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed hidden sm:block">
+                  Finest materials from certified manufacturers
                 </p>
+                <div className="flex items-center justify-center mt-2 sm:mt-3 text-orange-600">
+                  <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                  <span className="text-xs sm:text-sm font-medium">ISO Certified</span>
+                </div>
               </div>
-              <div className="text-center">
-                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Users className="h-8 w-8 text-orange-600" />
+
+              {/* Expert Support */}
+              <div className="group text-center p-3 sm:p-4 md:p-5 rounded-lg md:rounded-xl bg-white shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-gray-100">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-105 transition-transform duration-300">
+                  <HeartHandshake className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-white" />
                 </div>
-                <h3 className="font-semibold mb-2">Expert Support</h3>
-                <p className="text-gray-600 text-sm">
-                  Our team of experts is here to help you with your projects
+                <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-2">Expert Guidance</h3>
+                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed hidden sm:block">
+                  Personalized consultation & support
                 </p>
+                <div className="flex items-center justify-center mt-2 sm:mt-3 text-blue-600">
+                  <Phone className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                  <span className="text-xs sm:text-sm font-medium">24/7 Support</span>
+                </div>
               </div>
-              <div className="text-center">
-                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Star className="h-8 w-8 text-orange-600" />
+
+              {/* Best Prices */}
+              <div className="group text-center p-3 sm:p-4 md:p-5 rounded-lg md:rounded-xl bg-white shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-gray-100">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-105 transition-transform duration-300">
+                  <Star className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-white" />
                 </div>
-                <h3 className="font-semibold mb-2">Best Prices</h3>
-                <p className="text-gray-600 text-sm">
-                  Competitive pricing with no compromise on quality
+                <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-2">Best Prices</h3>
+                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed hidden sm:block">
+                  Competitive pricing & flexible payments
                 </p>
+                <div className="flex items-center justify-center mt-2 sm:mt-3 text-green-600">
+                  <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                  <span className="text-xs sm:text-sm font-medium">Best Price</span>
+                </div>
+              </div>
+
+              {/* Fast Delivery */}
+              <div className="group text-center p-3 sm:p-4 md:p-5 rounded-lg md:rounded-xl bg-white shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-gray-100">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-105 transition-transform duration-300">
+                  <Truck className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-white" />
+                </div>
+                <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-2">Fast Delivery</h3>
+                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed hidden sm:block">
+                  Quick delivery with real-time tracking
+                </p>
+                <div className="flex items-center justify-center mt-2 sm:mt-3 text-purple-600">
+                  <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                  <span className="text-xs sm:text-sm font-medium">Same Day</span>
+                </div>
+              </div>
+
+              {/* Trusted Brand */}
+              <div className="group text-center p-3 sm:p-4 md:p-5 rounded-lg md:rounded-xl bg-white shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-gray-100">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-105 transition-transform duration-300">
+                  <ShieldCheck className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-white" />
+                </div>
+                <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-2">Trusted Brand</h3>
+                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed hidden sm:block">
+                  Over a decade of excellence
+                </p>
+                <div className="flex items-center justify-center mt-2 sm:mt-3 text-indigo-600">
+                  <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                  <span className="text-xs sm:text-sm font-medium">10K+ Customers</span>
+                </div>
+              </div>
+
+              {/* Innovation */}
+              <div className="group text-center p-3 sm:p-4 md:p-5 rounded-lg md:rounded-xl bg-white shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-gray-100">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-105 transition-transform duration-300">
+                  <Zap className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-white" />
+                </div>
+                <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-2">Innovation</h3>
+                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed hidden sm:block">
+                  Latest tech & eco-friendly solutions
+                </p>
+                <div className="flex items-center justify-center mt-2 sm:mt-3 text-yellow-600">
+                  <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                  <span className="text-xs sm:text-sm font-medium">Eco-Friendly</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Call to Action - Mobile Optimized */}
+            <div className="text-center bg-white rounded-lg md:rounded-xl p-4 sm:p-6 md:p-8 shadow-md border border-orange-200">
+              <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-4">
+                Ready to Start Your Project?
+              </h3>
+              <p className="text-sm sm:text-base text-gray-600 mb-4 md:mb-6 max-w-xl mx-auto px-2">
+                Join thousands of satisfied customers who trust Shri Karni
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+                <Button 
+                  size="default"
+                  className="bg-orange-600 hover:bg-orange-700 text-white px-6 sm:px-8 py-2 sm:py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 text-sm sm:text-base"
+                >
+                  Browse Products
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="default"
+                  className="border-orange-600 text-orange-600 hover:bg-orange-50 px-6 sm:px-8 py-2 sm:py-3 rounded-lg font-semibold text-sm sm:text-base"
+                >
+                  Contact Expert
+                  <Phone className="ml-2 h-4 w-4" />
+                </Button>
               </div>
             </div>
           </div>
         )}
+
+        {/* Wall Panels Products Section */}
+        <div className="mb-8">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 md:mb-4">
+              Our <span className="text-orange-600">Wall Panels</span> Collection
+            </h2>
+            <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl mx-auto px-2">
+              Transform your spaces with our premium wall panel solutions
+            </p>
+          </div>
+
+          {(() => {
+            const wallPanelProducts = products.filter(
+              (p) => (p.category || '').toLowerCase().includes('wall') || 
+                     (p.name || '').toLowerCase().includes('wall panel') ||
+                     (p.description || '').toLowerCase().includes('wall panel')
+            )
+            
+            if (wallPanelProducts.length === 0) {
+              return (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-gray-100 rounded-lg mx-auto mb-4 flex items-center justify-center">
+                    <Package className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Wall Panels Coming Soon</h3>
+                  <p className="text-gray-600">We're adding new wall panel products to our collection</p>
+                </div>
+              )
+            }
+
+            return (
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                {wallPanelProducts.slice(0, 12).map((product) => (
+                  <ProductCard key={product.id} product={product} compact square />
+                ))}
+              </div>
+            )
+          })()}
+
+          {(() => {
+            const wallPanelProducts = products.filter(
+              (p) => (p.category || '').toLowerCase().includes('wall') || 
+                     (p.name || '').toLowerCase().includes('wall panel') ||
+                     (p.description || '').toLowerCase().includes('wall panel')
+            )
+            
+            if (wallPanelProducts.length > 12) {
+              return (
+                <div className="text-center mt-6">
+                  <Link href="/categories?category=wall panels">
+                    <Button 
+                      size="lg" 
+                      className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
+                      View All Wall Panels
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </Link>
+                </div>
+              )
+            }
+            return null
+          })()}
+        </div>
+      </div>
     </div>
   )
 }

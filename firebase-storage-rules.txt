@@ -1,0 +1,32 @@
+Firebase Storage Security Rules - Copy these to your Firebase Console
+
+Go to Firebase Console > Storage > Rules and replace with:
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Allow read access to all files
+    match /{allPaths=**} {
+      allow read: if true;
+    }
+    
+    // Allow write access to hero-slides folder
+    match /hero-slides/{allPaths=**} {
+      allow write: if true;
+    }
+    
+    // Allow write access to images folder (fallback)
+    match /images/{allPaths=**} {
+      allow write: if true;
+    }
+  }
+}
+
+Steps to update:
+1. Go to https://console.firebase.google.com/
+2. Select your project: db-shrikarni
+3. Go to Storage > Rules
+4. Replace existing rules with the above
+5. Click "Publish"
+
+This will allow uploads from localhost and any domain.

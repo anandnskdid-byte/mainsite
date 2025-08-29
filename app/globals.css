@@ -107,6 +107,21 @@
   animation: gradient-text 3s ease infinite;
 }
 
+.animate-shimmer {
+  position: relative;
+}
+.animate-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  transform: translateX(-100%);
+  animation: shimmer 2s linear infinite;
+}
+
+.animate-shake { animation: shake 0.3s ease-in-out 1; }
+.animate-fadeIn { animation: fadeIn 0.2s ease-in forwards; }
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
