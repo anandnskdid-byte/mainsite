@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { ProductCard } from '@/components/products/product-card'
 import { PremiumHero } from '@/components/hero/premium-hero'
+import { SakarniStainerCard } from '@/components/products/sakarni-stainer-card'
 import { Search, Filter, Package, ShoppingBag, Users, Star, ArrowRight, Truck, ShieldCheck, Award, Clock, HeartHandshake, Zap, CheckCircle, Phone } from 'lucide-react'
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel'
 
@@ -427,6 +428,17 @@ const HomePage = () => {
           </div>
         )}
 
+        {/* Featured Product - Sakarni Universal Stainer */}
+        <div className="mb-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Featured Product</h2>
+              <p className="text-gray-600">Discover our premium color solutions</p>
+            </div>
+            <SakarniStainerCard />
+          </div>
+        </div>
+
         {/* Products Section */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-6">
@@ -520,6 +532,15 @@ const HomePage = () => {
                 src="/wall.png"
                 alt="Great Range of Wall Panels - Shree Karni Home Solutions"
                 className="w-full h-auto rounded-lg md:rounded-xl shadow-lg transition-all duration-700 ease-in-out transform group-hover:scale-105 group-hover:shadow-2xl filter grayscale group-hover:grayscale-0"
+              />
+            </div>
+            {/* Extra image below banner */}
+            <div className="overflow-hidden rounded-lg md:rounded-xl">
+              <img
+                src="/asdds.png"
+                alt="Shri Karni Home Solutions additional banner"
+                className="w-full h-auto rounded-lg md:rounded-xl shadow-md"
+                loading="lazy"
               />
             </div>
           </div>

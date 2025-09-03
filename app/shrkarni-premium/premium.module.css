@@ -1,0 +1,56 @@
+.container {
+  min-height: 100vh;
+  background-color: black;
+  color: white;
+}
+
+.title {
+  font-size: 3rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(to right, #facc15, #ca8a04);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: #facc15; /* Fallback for older browsers */
+  display: inline-block; /* Required for some browsers */
+  background-size: 100%;
+  background-repeat: repeat;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent; 
+  -moz-background-clip: text;
+  -moz-text-fill-color: transparent;
+}
+
+.subtitle {
+  font-size: 1.25rem;
+  color: #d1d5db;
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+.goldText {
+  color: #facc15;
+}
+
+.goldBg {
+  background-color: #facc15;
+}
+
+.goldBorder {
+  border-color: #facc15;
+}
+
+.hoverGold:hover {
+  color: #facc15;
+}
+
+.hoverGoldBg:hover {
+  background-color: rgba(234, 179, 8, 0.1);
+}
+
+@media (min-width: 768px) {
+  .title {
+    font-size: 4.5rem;
+  }
+}
