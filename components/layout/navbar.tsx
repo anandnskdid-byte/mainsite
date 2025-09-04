@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { ShoppingCart, User, LogOut, Home, Package, Users, MessageSquare, Menu, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ShoppingCart, User, LogOut, Home, Package, Users, MessageSquare, Menu, Search, ChevronLeft, ChevronRight, Info } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { logoutUser } from '@/lib/auth'
 import { useCart } from '@/contexts/cart-context'
@@ -180,6 +180,14 @@ export function Navbar() {
                   </Button>
                 </Link>
 
+                {/* About */}
+                <Link href="/shrkarni-premium/about">
+                  <Button variant="ghost" className="text-gray-600 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200">
+                    <Info className="h-4 w-4 mr-2" />
+                    About
+                  </Button>
+                </Link>
+
                 {/* Enhanced Cart */}
                 <Link href="/cart">
                   <Button variant="ghost" className="relative text-gray-600 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200 group">
@@ -222,6 +230,14 @@ export function Navbar() {
                   <Button variant="ghost" className="text-gray-600 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200">
                     <Package className="h-4 w-4 mr-2" />
                     Categories
+                  </Button>
+                </Link>
+
+                {/* About (Guests) */}
+                <Link href="/shrkarni-premium/about">
+                  <Button variant="ghost" className="text-gray-600 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200">
+                    <Info className="h-4 w-4 mr-2" />
+                    About
                   </Button>
                 </Link>
 
@@ -454,6 +470,14 @@ export function Navbar() {
                       </Link>
                     )}
 
+                    {/* About (Mobile, logged in) */}
+                    <Link href="/shrkarni-premium/about">
+                      <Button variant="ghost" size="sm" className="w-full justify-start">
+                        <Info className="h-4 w-4 mr-2" />
+                        About
+                      </Button>
+                    </Link>
+
                     <Link href="/crm/dashboard">
                       <Button variant="ghost" size="sm" className="w-full justify-start">
                         <MessageSquare className="h-4 w-4 mr-2" />
@@ -468,6 +492,14 @@ export function Navbar() {
                   </>
                 ) : (
                   <>
+                    {/* About (Mobile, guests) */}
+                    <Link href="/shrkarni-premium/about">
+                      <Button variant="ghost" size="sm" className="w-full justify-start">
+                        <Info className="h-4 w-4 mr-2" />
+                        About
+                      </Button>
+                    </Link>
+
                     <Link href="/customer/login">
                       <Button variant="ghost" size="sm" className="w-full justify-start">
                         <User className="h-4 w-4 mr-2" />
